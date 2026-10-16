@@ -1,8 +1,0 @@
-package api;
-public final class Key {
-  private final String id;
-  public Key(String id) { this.id = java.util.Objects.requireNonNull(id); }
-  @Override public int hashCode() { return id.hashCode(); }
-  @Override public boolean equals(Object other) { return other instanceof Key key && id.equals(key.id); }
-  public boolean equals(Key other) { return equals((Object) other); }
-}

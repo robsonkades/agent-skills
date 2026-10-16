@@ -1,3 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: Both independent variants must retain audit=true: [Product[label=left, audit=false], Product[label=right, audit=false]]
-	at sample.ActorMain.verify(ActorMain.java:15)
-	at sample.ActorMain.main(ActorMain.java:8)

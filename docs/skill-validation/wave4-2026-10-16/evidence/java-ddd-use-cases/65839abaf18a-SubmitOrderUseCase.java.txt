@@ -1,8 +1,0 @@
-package com.example.application.order.submit;
-
-import com.example.application.UseCase;
-
-public sealed abstract class SubmitOrderUseCase
-        extends UseCase<SubmitOrderCommand, SubmitOrderOutput>
-        permits DefaultSubmitOrderUseCase {
-}

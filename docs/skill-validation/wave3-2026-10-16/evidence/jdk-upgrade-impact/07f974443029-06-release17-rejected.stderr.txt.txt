@@ -1,6 +1,0 @@
-C:\Users\robso\AppData\Local\Temp\skills-wave3-validation-wyg7TL\jdk-upgrade-impact-validation\actor\common\src\FirstChoice.java:7: error: cannot find symbol
-        return values.getFirst();
-                     ^
-  symbol:   method getFirst()
-  location: variable values of type List<String>
-1 error

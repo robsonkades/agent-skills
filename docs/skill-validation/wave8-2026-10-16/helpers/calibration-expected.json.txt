@@ -1,6 +1,0 @@
-{
-  "K1": "accept",
-  "K2": "reject",
-  "K3": "accept",
-  "K4": "reject"
-}

@@ -1,5 +1,0 @@
-Apache Maven 3.9.15 (98b2cdbfdb5f1ac8781f537ea9acccaed7922349)
-Maven home: C:\dev\apache-maven-3.9.15
-Java version: 25.0.3, vendor: Eclipse Adoptium, runtime: C:\Users\robso\.jdks\temurin-25.0.3
-Default locale: en_US, platform encoding: UTF-8
-OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"

@@ -1,4 +1,0 @@
-PASS reject null time [NullPointerException]
-Exception in thread "main" java.lang.AssertionError: null time leaves state and pending events unchanged
-	at DomainEventsProbe.check(DomainEventsProbe.java:19)
-	at DomainEventsProbe.main(DomainEventsProbe.java:38)

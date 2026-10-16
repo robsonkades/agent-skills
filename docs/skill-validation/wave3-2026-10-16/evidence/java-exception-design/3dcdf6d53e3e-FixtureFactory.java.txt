@@ -1,8 +1,0 @@
-import java.io.IOException;
-
-public final class FixtureFactory {
-    public static StoredFailureResource resourceFor(IOException workFailure) {
-        return new StoredFailureResource(new IOException("storage failure"));
-    }
-}
-

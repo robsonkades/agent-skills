@@ -1,3 +1,0 @@
-# Inventory provider API v2 contract
-
-GET availability is an informational snapshot; it acquires no hold. The sourceVersion identifies the observation. POST reservations atomically checks remaining stock and creates a hold bound to tenant, order, SKU, quantity, expiry and caller operation ID. It does not confirm an order in the orders database. A timeout can follow a committed hold. The provider exposes lookup by operation ID and idempotent retry of the same request meaning for 24 hours; changing request fields under that ID is rejected. Confirmation must occur before expiry. Cancellation and status lookup exist for recovery when the local order save fails. No provider endpoint is available to this review fixture.

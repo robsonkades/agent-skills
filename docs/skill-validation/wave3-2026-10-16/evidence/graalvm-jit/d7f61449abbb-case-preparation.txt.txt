@@ -1,7 +1,0 @@
-{
-  "cases": 2,
-  "differences": [
-    "metrics.csv"
-  ],
-  "inputCriteriaSeparated": true
-}

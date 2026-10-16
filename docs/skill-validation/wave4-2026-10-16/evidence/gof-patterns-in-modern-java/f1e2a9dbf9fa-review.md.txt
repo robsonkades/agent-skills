@@ -1,5 +1,0 @@
-# Release review draft
-
-Status: READY, awaiting review.
-
-The new document library and renderer compile together, so the selected batch-job rollout preserves rendering behavior. The type hierarchy and rendering choice remain accepted. Existing text output should stay unchanged; a note renders as NOTE followed by its text. No performance gain is claimed.

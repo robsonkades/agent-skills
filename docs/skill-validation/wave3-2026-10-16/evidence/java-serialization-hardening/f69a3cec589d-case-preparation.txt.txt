@@ -1,8 +1,0 @@
-{
-  "cases": 2,
-  "filesPerCase": 13,
-  "differences": [
-    "acceptance-policy.json"
-  ],
-  "inputsCriteriaSeparated": true
-}

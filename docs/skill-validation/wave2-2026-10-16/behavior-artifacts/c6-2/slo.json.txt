@@ -1,5 +1,0 @@
-{
-  "population": "All 10000 eligible logical operations started in the measured cohort; no excluded operations.",
-  "goodEvent": "Caller receives the required successful result within 100 ms.",
-  "requiredGoodFraction": 0.98
-}

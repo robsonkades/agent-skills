@@ -1,1 +1,0 @@
-The operator calls Dispatcher.replayOne until it returns false, under the existing one-worker policy. Pending rows are outbox.done=false. Retry the retained work after resolving a receiver or checkpoint error; never resubmit a committed order merely to redeliver.

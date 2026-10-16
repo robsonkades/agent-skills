@@ -1,5 +1,0 @@
-strategy=org.springframework.security.core.context.InheritableThreadLocalSecurityContextHolderStrategy
-exceptional=false parent=worker-after
-Exception in thread "main" java.lang.AssertionError: child changed caller authentication
-	at BridgeCase.exercise(BridgeCase.java:56)
-	at BridgeCase.main(BridgeCase.java:64)

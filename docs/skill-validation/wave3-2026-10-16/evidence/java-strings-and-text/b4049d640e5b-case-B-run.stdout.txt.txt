@@ -1,5 +1,0 @@
-FAIL nonempty fragment: changed output
-FAIL empty fragment: changed output
-FAIL supplementary and combining text: changed output
-FAIL null fragment: new NullPointerException
-FAIL mixed fragments: new NullPointerException

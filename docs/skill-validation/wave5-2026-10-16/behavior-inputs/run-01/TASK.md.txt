@@ -1,9 +1,0 @@
-Investigue o relato em support.md usando os artefatos do projeto e o contrato aceito. Determine se existe defeito e sua causa. Corrija o projeto quando houver violação, com verificação relevante; preserve comportamento já adequado. Entregue o projeto final e REVIEW.md com evidências, conclusão, alterações e limitações. Não mude o contrato, a baseline Java ou dependências.
-
-Trabalhe exclusivamente em C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-01. O projeto inicial está em input/project (somente leitura), e uma cópia de trabalho já está em output/project. Você não está sozinho: escreva somente dentro de output/. Não modifique input/, skill/, contract.md nem lib/compat.jar, se existir. Pode editar fontes, testes e configuração do projeto de trabalho quando sustentado pela investigação. Preserve as entradas originais e cobertura útil existente.
-
-Nenhuma skill foi fornecida nesta execução. Resolva usando os artefatos locais.
-
-Não leia o repositório C:/git/agent-skills, outros runs, critérios, handoffs, pastas de avaliações, skills globais ou conversas anteriores. Não use rede, instalações, outros agentes ou configuração real. Java, javac, javap e jar estão em C:/Users/robso/.jdks/temurin-25.0.3/bin. Node está disponível. Use alvo Java 17 e preserve o runtime disponível (Temurin25.0.3+9); cada processo deve ter limite de 30s.
-
-Execute verificações proporcionais e conserve logs/scripts. Salve output/REVIEW.md e output/execution.json. No JSON registre comandos exatos com argumentos, cwd, exit e saída ou caminho do log, arquivos/conteúdos efetivamente lidos (incluindo skill/referências e qualquer truncamento), limitações e qualquer acesso acidental fora do escopo. Diferencie execução de proposta. Ao terminar, encerre processos, pare as escritas e confirme allWritesStopped:true.

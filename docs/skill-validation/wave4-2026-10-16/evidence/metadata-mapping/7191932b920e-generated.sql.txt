@@ -1,1 +1,0 @@
-create table customer_order (id bigint not null, placed_at timestamp(6) with time zone, primary key (id));

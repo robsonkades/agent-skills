@@ -1,6 +1,0 @@
-PASS: initial-namespace membership selects the two target subject events.
-PASS: mixed namespace membership selects the hostile/non-target host-TID collision and excludes both target events.
-PASS: normalizing membership to the host/initial ID restores the intended population in this fixture.
-PASS: current-task IDs still select the wrong subject in this fixture; namespace normalization alone does not change event subject.
-PASS: retained bpftrace 0.24 and Linux v6.12 sources contain the verified identity contracts.
-LIMIT: finite JavaScript identity model and source checks only; no bpftrace compile/load, live trace, overhead, dynamic lifecycle or agent evaluation.

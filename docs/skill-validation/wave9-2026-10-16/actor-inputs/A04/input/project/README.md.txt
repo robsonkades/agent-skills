@@ -1,5 +1,0 @@
-# Local retry component exercise
-
-These are authored exercise inputs, not production captures. Baseline: Java 17 source/API; JDK 25.0.3 is available and javac --release 17 is required. No preview, new dependencies, installation, network workload, real config or runtime setting changes. A local simulation cannot establish a provider's durable guarantees, wall-clock latency or fleet behavior.
-
-All input files and the provided copies in output/ are immutable except the implementation file named in REQUEST.md. Work in output/. For Java cases add Verification.java with a main method exercising the actual implementation and run node run.mjs Verification after inspecting the runner. Smoke is intentionally small, not comprehensive acceptance. Put the review in REVIEW.md (at most 750 words), a decision/evidence/limits summary in result.json and an honest read/command journal in execution.json. Do not self-grade. Finish writes/processes and set allWritesStopped=true. Keep generated class files local; no real service is involved.

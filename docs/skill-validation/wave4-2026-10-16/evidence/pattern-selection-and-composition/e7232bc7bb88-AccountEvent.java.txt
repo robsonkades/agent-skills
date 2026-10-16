@@ -1,1 +1,0 @@
-public record AccountEvent(String messageId, long accountId, long revision, long balanceCents) {}

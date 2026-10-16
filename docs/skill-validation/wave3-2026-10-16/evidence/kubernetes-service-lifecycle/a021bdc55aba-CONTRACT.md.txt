@@ -1,5 +1,0 @@
-Target: Kubernetes 1.34.
-
-One Deployment owns all pods matching the Service and PDB selectors. There are no other matching controllers or disruption budgets, no autoscaler, and no admission policy that mutates these manifests. At the initial decision point all desired pods are healthy, Ready, and available; no pod is deleting and no disruption is already in progress. Capacity exists for one extra pod. There is no live PDB status or request-traffic capture in this fixture.
-
-The service's policy requires at least one healthy pod to remain protected by its configured budget during voluntary disruption through the Eviction API. Operators need the drain tradeoff stated before proceeding. Node failure and direct deletion are outside this budget's guarantee. Review the declared replica count; do not assume additional replicas. The selected image and existing probe/lifecycle behavior are outside this focused review. A manifest review is not an availability integration test.

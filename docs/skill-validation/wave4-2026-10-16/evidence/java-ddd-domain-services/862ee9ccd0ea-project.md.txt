@@ -1,3 +1,0 @@
-# Project evidence
-
-Java 17, no preview. runtime.properties is the effective per-deployment setting supplied to AssessStockUseCase without overrides. Orders.saveWithVersionCheck checks and increments the version of that individual order row; it is not a lock or allocation record for a SKU. The deployment has multiple application instances. Domain objects and decisionAt are supplied non-null by the boundary. This is a synthetic source-review fixture, with no database or network credentials.

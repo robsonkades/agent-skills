@@ -1,4 +1,0 @@
-{
-  "at": "2026-10-16T20:12:51.575Z",
-  "sha256": "e5a393ebdbdc44ccbcea2d55ffdeae087e62116d067aa55b40411f1f1f35d60c"
-}

@@ -1,3 +1,0 @@
-package example;
-@UseCodec
-public final class DefaultUse {}

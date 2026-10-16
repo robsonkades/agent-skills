@@ -1,5 +1,0 @@
-
-Name         Length
-----         ------
-javac25.html 106849
-list21.html  128547

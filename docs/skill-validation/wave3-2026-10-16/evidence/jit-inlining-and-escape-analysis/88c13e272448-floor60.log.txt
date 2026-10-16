@@ -1,3 +1,0 @@
-                            @ 8   FrequencyProbe::occasional (13 bytes)   inline (hot)
-checksum=156356445007
-runtime=25.0.3+9-LTS

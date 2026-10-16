@@ -1,6 +1,0 @@
-{
-  "skill": "feature-requirement-clarification",
-  "common": "Clarify the next step without implementation. Dana's accepted P3 defines interactive exports as completing within the request and scheduled exports as asynchronous. Q01 concerns that distinction; Q02 concerns the CSV fields id, date, and amount. RES02 is the endpoint; RES03 is the dependent UI; RES04 is the independent CSV work. Pat replies: Interactive exports are background jobs; email is probable, but check with Operations. RES02 is next. Update the understanding and identify the next useful question.",
-  "scenarioA": "Pat has delegated authority to replace P3 and expressly confirms that this reply replaces it.",
-  "scenarioB": "Pat has no authority and offers this as a proposal only."
-}

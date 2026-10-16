@@ -1,9 +1,0 @@
-Call BookingService through the configured Spring application context. The schema is initialized by the existing launcher/tests. BookingService.place uses REQUIRED on businessTx: booking and stock reservation commit together, and an existing transaction's caller owns completion.
-
-BookingListener runs synchronously AFTER_COMMIT. It calls the Spring-managed ReceiptWriter, whose REQUIRES_NEW transaction on businessTx commits the receipt header and detail together. ReceiptObserver.beforeWrite remains inside that writer immediately before the header insert. Do not move the receipt to BEFORE_COMMIT or change BookingService to REQUIRES_NEW: an owner rollback must leave no receipt.
-
-A valid receipt is stored before the completing command/owner returns. A body exceeding 12 characters fails its independent receipt transaction: neither receipt row remains, while the booking and reservation stay committed and the business call succeeds. Spring Framework 7.0.9 logs the after-completion exception; inspect that log and the receipt/receipt_detail tables for diagnosis. Do not retry the booking merely to repair a missing optional receipt.
-
-Loss on callback failure or application interruption is accepted. There is no retry queue, recovery store, executor or restart-recovery guarantee. Events published without an active transaction are skipped. Inspect persisted state outside the completed transaction.
-
-Run `node check.mjs` and `node check.mjs work.Regression`. The regression checks independent READ_COMMITTED visibility inside the writer, exact 12-character bodies, atomic rejection of longer bodies, synchronous scheduling, stock failures, nontransactional events, REQUIRED participation, and owner failures both before and during completion. These local H2 checks do not prove production database crash behavior, distributed delivery or JPA semantics.

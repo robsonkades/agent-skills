@@ -1,3 +1,0 @@
-# Pending parser proposal
-
-Add an end-of-input check directly to AtomParser.parse: throw when the returned position is not the end of its input except for whitespace. The author argues that every parser must consume its whole input and that this is the smallest correction for the active endpoint. A parser-generator rewrite was also suggested if the check is insufficient. Review against the accepted callers before adopting either change.

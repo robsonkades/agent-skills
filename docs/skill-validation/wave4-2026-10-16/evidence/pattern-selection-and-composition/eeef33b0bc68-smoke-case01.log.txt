@@ -1,1 +1,0 @@
-SMOKE PASS assertions=4 result=State[accountId=7, revision=42, balanceCents=9000]

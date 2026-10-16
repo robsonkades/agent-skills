@@ -1,5 +1,0 @@
-package com.acme.orders.domain;
-
-public interface NotificationPort {
-    void send(String message);
-}

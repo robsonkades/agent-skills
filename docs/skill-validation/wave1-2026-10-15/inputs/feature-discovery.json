@@ -1,6 +1,0 @@
-{
-  "skill": "feature-discovery",
-  "common": "Update the ledger and handoff only; do not implement or contact anyone. The feature is export in production r42. F01 is Product-accepted: users see completion. Provisional assumption A07 says that all production r42 exports complete before the HTTP response; a response before completion would falsify it. Estimate E03 depends on A07. U04 is the HIGH-priority unknown cause of the delay. N1 and N2 repeat incident I17's claim that a cache miss caused the delay; I17 is unavailable. An engineer's unadopted hypotheses are a cache miss or a worker wait. T9 for operation op9 records HTTP 202 at 10:00 and completion at 10:00:30.",
-  "scenarioA": "T9 is attributable to production r42.",
-  "scenarioB": "T9 is attributable to staging r42."
-}

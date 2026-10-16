@@ -1,5 +1,0 @@
-SELECT account_id, revision, balance_cents
-FROM account_history
-WHERE account_id = ?
-ORDER BY revision DESC
-FETCH FIRST 1 ROW ONLY

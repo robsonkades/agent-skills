@@ -1,6 +1,0 @@
-{
-  "ThresholdBytes": 30198988,
-  "TotalHeapUsedBytes": 1460504,
-  "UsedBelowThreshold": true,
-  "Interpretation": "Controlled explicit request, not an occupancy-trigger inference from this row"
-}

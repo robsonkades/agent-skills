@@ -1,5 +1,0 @@
-2026-10-16: node run-local.mjs exited 1 after all six Java child commands completed successfully.
-The structural assertion used manifest.version.raw, but SemanticVersion is a branded string.
-Observed assertion: actual undefined, expected '1.3.5', at run-local.mjs:78.
-Corrected the harness to assert manifest.version directly. No skill content or Java fixture was changed to resolve this harness error.
-Reran only structural checks via --structure-only, preserving prior successful technical logs and results.

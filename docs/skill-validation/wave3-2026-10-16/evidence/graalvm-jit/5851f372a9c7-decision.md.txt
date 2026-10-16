@@ -1,3 +1,0 @@
-# Proposed measurement decision
-
-The compiler statistics stop changing at 30 seconds, so Graal and the application are fully warm then. The 300 ms totalTimeSpent is compiler CPU cost. Use the 60-150 second window as steady-state evidence for the C2/Graal comparison. All runtime-selection and correctness checks listed in runtime.json remain accepted.

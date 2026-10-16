@@ -1,1 +1,0 @@
-actual=[Product[label=right, audit=true], Product[label=right, audit=true]]

@@ -1,1 +1,0 @@
-PASS first element and empty-list contract

@@ -1,5 +1,0 @@
-[0.022s][info ][jit,compilation  ]   11    b  4       CompilationProbe::hot (16 bytes)
-[0.024s][info ][jit,compilation  ]   14 %  b  4       CompilationProbe::main @ 7 (46 bytes)
-[0.026s][info ][jit,compilation  ]   14 %     4       CompilationProbe::main @ 7 (46 bytes)   made not entrant: uncommon trap
-[0.029s][info ][jit,compilation  ]   33    b  4       java.lang.Object::<init> (1 bytes)
-[0.031s][info ][jit,compilation  ]   42    b  4       java.lang.Byte::toUnsignedInt (6 bytes)

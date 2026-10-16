@@ -1,1 +1,0 @@
-delivery.mode=PUBLISH_DURABLE

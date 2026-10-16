@@ -1,5 +1,0 @@
-# Payload bytes
-
-The report describes the bytes of entries materialized by a catalog export. Each catalog path produces its own destination entry, even when two paths resolve to the same loaded source entry.
-
-Leaf bytes are exact nonnegative payload sizes. Totals beyond long must fail. This is a payload accounting figure, not a measurement of JVM object overhead, latency or deduplicated storage.

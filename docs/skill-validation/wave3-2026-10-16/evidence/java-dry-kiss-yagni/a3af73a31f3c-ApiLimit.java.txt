@@ -1,9 +1,0 @@
-package example.limits;
-
-@javax.annotation.processing.Generated("fixture.PolicyRenderer")
-public final class ApiLimit {
-    private ApiLimit() {}
-    public static boolean accepts(int count) {
-        return count >= 1 && count <= 200;
-    }
-}

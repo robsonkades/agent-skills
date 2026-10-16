@@ -1,3 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: Masking failure must not turn NOT into an accepted decision: expected EvaluationFailure
-	at InterpreterProbe.expects(InterpreterProbe.java:152)
-	at InterpreterProbe.main(InterpreterProbe.java:184)

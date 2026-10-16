@@ -1,9 +1,0 @@
-event=0 key=A cost=10 admitted=true retryAfter=PT0S registrySize=1
-event=1 key=B cost=1 admitted=true retryAfter=PT0S registrySize=2
-evicted=A
-event=2 key=C cost=1 admitted=true retryAfter=PT0S registrySize=2
-evicted=B
-event=3 key=A cost=10 admitted=true retryAfter=PT0S registrySize=2
-maximumKeys=2 acceptedByA=20 envelope=10.000006467 elapsedSeconds=0.023281500
-Exception in thread "main" java.lang.AssertionError: authenticated A exceeded its declared burst/refill envelope
-	at RegistryContractCheck.main(RegistryContractCheck.java:76)

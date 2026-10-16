@@ -1,7 +1,0 @@
-command=["C:\\Users\\robso\\.jdks\\temurin-25.0.3\\bin\\javac.exe","-version"]
-cwd=C:\Users\robso\AppData\Local\Temp\skills-wave4-validation-Ceekn9\orm-behavioral-patterns-validation
-exit=0
-STDOUT
-javac 25.0.3
-
-STDERR

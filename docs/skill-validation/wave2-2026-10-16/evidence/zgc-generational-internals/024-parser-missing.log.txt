@@ -1,2 +1,0 @@
-awk: fatal: cannot open file `missing.log' for reading: No such file or directory
-pause extraction failed; retain inputs and diagnostics

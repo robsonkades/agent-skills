@@ -1,1 +1,0 @@
-javac --release 17 exit=0

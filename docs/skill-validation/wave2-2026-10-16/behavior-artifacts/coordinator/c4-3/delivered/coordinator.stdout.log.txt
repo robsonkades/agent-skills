@@ -1,6 +1,0 @@
-Existing point and join checks passed; moved=2094
-Accepted epoch E agrees: key=user:2, primary=n2, replicas=[n2, n3, n4]
-Candidate epoch E agrees: key=user:2, primary=n2, replicas=[n2, n3, n4]
-Negative control rejected as required: Prefix negative control: key=user:2, expected primary=n2, replicas=[n2, n3, n4]; actual primary=n1, replicas=[n1, n3, n2]
-Restored prefix control agrees: key=user:2, primary=n2, replicas=[n2, n3, n4]
-ClientRouter compatibility check passed (1 frozen vector, prefix control).

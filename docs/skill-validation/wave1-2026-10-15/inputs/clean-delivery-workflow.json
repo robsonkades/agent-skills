@@ -1,6 +1,0 @@
-{
-  "skill": "clean-delivery-workflow",
-  "common": "Provide a plan only; do not edit or deploy. Rename the internal jobs.next_run database column to scheduled_at, preserving its type and values. Mandatory repository tests and schema checks apply. A complete consumer inventory covers all applications, workers, and reports. Representative rehearsals show that migration, validation, and a tested restore fit within 30 minutes; restore must occur before writes resume. Recommend a sequence and checks, and revise them if a newly discovered report must keep reading next_run during the transition.",
-  "scenarioA": "The approved policy permits a coordinated 30-minute outage: all consumers stop and restart only with the updated application and schema.",
-  "scenarioB": "The policy requires uninterrupted service; old and new consumers share the database during a rolling rollout."
-}

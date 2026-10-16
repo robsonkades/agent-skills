@@ -1,3 +1,0 @@
- M skills/orm-structural-mapping/references/embedding-and-serialization.md
- M skills/orm-structural-mapping/references/identity-and-associations.md
- M skills/orm-structural-mapping/skill.yaml

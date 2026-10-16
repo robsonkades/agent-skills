@@ -1,7 +1,0 @@
-package shipping;
-import orders.Order;
-public final class ShippingLabel {
-    public String label(Order order) {
-        return "zone:" + order.customer().contact().deliveryZone();
-    }
-}

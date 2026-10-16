@@ -1,3 +1,0 @@
-Checking formatting...
-[warn] skills/graalvm-jit/references/troubleshooting-and-timeline.md
-[warn] Code style issues found in the above file. Run Prettier with --write to fix.

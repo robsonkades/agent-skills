@@ -1,3 +1,0 @@
-# DeliverySink production contract
-
-The runtime supplies a durable broker adapter. publish returning normally means the request is durably accepted. Delivery may begin immediately. The same requestId is deduplicated; a local DraftSession change does not call the adapter. This interface has no recall or cancel method. The review environment has no broker connection or credentials.

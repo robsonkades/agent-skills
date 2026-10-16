@@ -1,5 +1,0 @@
-Review Operation.run and its resource provider for Java 21 without preview. The public contract is to preserve the work failure object when work fails, attempt close exactly once, and retain a distinct cleanup failure as suppressed. If work succeeds and close fails, the close failure must propagate. Exception messages are diagnostic text, not identity.
-
-Inspect all supplied source, including FixtureFactory. The resource implementation represents a supported dependency contract and is read-only for this task. Change only Operation.java if needed, add targeted tests, and write review.md explaining the caller-visible outcome and compatibility. Retain an adequate implementation rather than rewriting it automatically. Do not change Java release settings, install dependencies or turn failures into success.
-
-Probe.java prints the current behavior and can be run after compiling these files. It is an observation tool, not a test oracle. A modern JDK compiling with --release 21 does not establish execution on a Java 21 VM.

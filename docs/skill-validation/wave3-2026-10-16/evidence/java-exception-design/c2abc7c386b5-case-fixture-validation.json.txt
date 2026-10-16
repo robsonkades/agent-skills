@@ -1,5 +1,0 @@
-{
-  "checks": 7,
-  "result": "PASS",
-  "scope": "Case fixture integrity only; not an agent evaluation."
-}

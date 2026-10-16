@@ -1,5 +1,0 @@
-
-> agent-skills-monorepo@1.11.2 registry:build
-> node scripts/build-registry-index.mjs
-
-Wrote registry/skills.yaml with 305 skills

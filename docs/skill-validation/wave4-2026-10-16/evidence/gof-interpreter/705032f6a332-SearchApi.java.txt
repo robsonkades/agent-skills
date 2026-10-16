@@ -1,7 +1,0 @@
-public final class SearchApi {
-    private final AtomParser parser = new AtomParser();
-    public boolean matches(String filter, AtomParser.Status actual) {
-        var parsed = parser.parse(filter);
-        return parsed.atom().matches(actual);
-    }
-}

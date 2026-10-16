@@ -1,3 +1,0 @@
-requestedLocale,pattern,text
-en-US,dd MMM uuuu,01 Mar 2026
-fr-FR,dd MMM uuuu,01 mars 2026

@@ -1,7 +1,0 @@
-{
-  "identicalFiles": 7,
-  "changedFile": "schema.sql",
-  "onlyDifference": "CONSTRAINT uq_badge_member UNIQUE (member_id)",
-  "criteriaExposedToActors": false,
-  "actorsExecuted": 0
-}

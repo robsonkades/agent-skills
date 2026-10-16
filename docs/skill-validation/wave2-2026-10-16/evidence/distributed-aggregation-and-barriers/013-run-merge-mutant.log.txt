@@ -1,3 +1,0 @@
-PASS sequential helper: 5; merge hook not called
-Exception in thread "main" java.lang.AssertionError: partition merge: expected 5 but got 3
-	at AggregationInvocationCheck.main(AggregationInvocationCheck.java:40)

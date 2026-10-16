@@ -1,3 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: Unconditional normalization erases required significant scale
-	at RecordContractProbe.check(RecordContractProbe.java:32)
-	at RecordContractProbe.main(RecordContractProbe.java:43)

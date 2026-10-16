@@ -1,3 +1,0 @@
-# Review request
-
-The team wants a concurrency review of the current memo. A sequential smoke is green. Determine whether the accepted lookup contract is satisfied and explain the relevant access path. Preserve valid code; propose a focused correction only for a demonstrated contract gap. A successful smoke alone is not an answer to the review. Deliver review.md; do not change production sources or the contract.

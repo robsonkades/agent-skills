@@ -1,1 +1,0 @@
-public final class PriceRejected extends RuntimeException { private static final long serialVersionUID = 1L; public PriceRejected(Sku sku, String message) { super(sku.value() + ": " + message); } }

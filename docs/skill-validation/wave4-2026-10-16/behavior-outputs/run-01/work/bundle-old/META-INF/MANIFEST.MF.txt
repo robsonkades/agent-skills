@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Created-By: 25.0.3 (Eclipse Adoptium)
-Main-Class: com.example.app.ReportApp
-

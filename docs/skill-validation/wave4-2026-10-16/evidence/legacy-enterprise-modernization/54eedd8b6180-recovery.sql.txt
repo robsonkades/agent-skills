@@ -1,5 +1,0 @@
-SET ROLE lm_w4_owner;
-DROP VIEW lm_w4.cliente;
-ALTER TABLE lm_w4.customer RENAME COLUMN id TO cod_cli;
-ALTER TABLE lm_w4.customer RENAME TO cliente;
-RESET ROLE;

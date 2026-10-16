@@ -1,7 +1,0 @@
-import java.util.*;
-public interface AuthorisationRule {
-    String name(); // stable bounded rule kind, not tenant/payment identifiers
-    /** Non-null: empty abstains; any present decision, including decline, ends selection.
-     *  Exceptions fail the attempt; they are not abstention. */
-    Optional<Decision> apply(Payment payment);
-}

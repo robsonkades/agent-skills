@@ -1,2 +1,0 @@
-comparison=absolute
-absoluteTolerance=0.000001

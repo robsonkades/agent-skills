@@ -1,5 +1,0 @@
-Existing point and join checks passed; moved=2075
-Checking frozen placement contract at epoch E
-accepted.properties: key=user:2, primary=n2, ordered replicas=[n2, n3, n4]
-Frozen ClientRouter placement vector passed: accepted.properties
-candidate.properties: key=user:2, primary=n1, ordered replicas=[n1, n3, n2]

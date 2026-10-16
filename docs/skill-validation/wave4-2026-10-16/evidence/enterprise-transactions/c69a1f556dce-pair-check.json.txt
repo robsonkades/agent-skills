@@ -1,6 +1,0 @@
-{
-  "identicalFiles": 4,
-  "changedFile": "application.properties",
-  "onlyChangedConstraint": "batch.statements=basic versus remaining",
-  "actorInputsSeparateFromCriteria": true
-}

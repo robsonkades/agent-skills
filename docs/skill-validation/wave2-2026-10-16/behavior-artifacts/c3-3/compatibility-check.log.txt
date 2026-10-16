@@ -1,7 +1,0 @@
-Existing point and join checks passed; moved=2075
-Checking frozen placement contract at epoch E
-accepted.properties: key=user:2, primary=n2, ordered replicas=[n2, n3, n4]
-Frozen ClientRouter placement vector passed: accepted.properties
-candidate.properties: key=user:2, primary=n1, ordered replicas=[n1, n3, n2]
-Exception in thread "main" java.lang.AssertionError: Placement contract mismatch: expected primary=n2, ordered replicas=[n2, n3, n4]; actual primary=n1, ordered replicas=[n1, n3, n2]
-	at ClientRouterCompatibility.main(ClientRouterCompatibility.java:31)

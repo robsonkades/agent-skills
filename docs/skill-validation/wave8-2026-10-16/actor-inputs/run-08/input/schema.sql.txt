@@ -1,2 +1,0 @@
-CREATE TABLE tickets(id bigint PRIMARY KEY, tenant_id bigint NOT NULL, priority integer, created_at text NOT NULL, label text NOT NULL);
-CREATE INDEX ticket_feed ON tickets(tenant_id,priority DESC,created_at ASC,id DESC);

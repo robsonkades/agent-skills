@@ -1,1 +1,0 @@
-package shop.orders; import java.math.BigDecimal; public record Order(String id, BigDecimal total, String customerEmail) {}

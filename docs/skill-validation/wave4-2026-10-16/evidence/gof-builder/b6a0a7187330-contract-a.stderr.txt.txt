@@ -1,2 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: 2 contract checks failed
-	at ContractProbe.main(ContractProbe.java:93)

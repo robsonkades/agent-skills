@@ -1,3 +1,0 @@
-Each CatalogLookup instance is confined to one thread. The seed map is copied during construction. The loader does not re-enter or mutate this cache. Keys, constructor arguments and invalidation keys must be non-null; a returned String may legitimately be null. Non-null results are retained until invalidate(sku). There is no implicit expiry, and invalidation permits a fresh lookup.
-
-A null entry in the seed or a null returned by the loader means a completed lookup found no result. That completed absence must be retained until invalidate(sku), just like a non-null result.

@@ -1,7 +1,0 @@
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
-public final class Startup {
-    public static AnnotationConfigApplicationContext start() {
-        return new AnnotationConfigApplicationContext(StorageConfiguration.class);
-    }
-}

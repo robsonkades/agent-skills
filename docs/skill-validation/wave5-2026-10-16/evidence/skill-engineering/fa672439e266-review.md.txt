@@ -1,5 +1,0 @@
-# Review draft
-
-Both configurations pass all eight checks. This is eight independent successful tests per configuration and establishes equivalent quality. The added verification step in the revised skill therefore has no value and can be deleted.
-
-The current table is enough to decide; no further investigation is planned.

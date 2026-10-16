@@ -1,1 +1,0 @@
-Java compiler target 21, no preview. Runtime/toolchain available: Temurin 25.0.3. JUnit Jupiter 5.11.4 jars are already cached. Run node check.mjs. Dependencies and source paths are in that script. Preserve all checks with a continuing contract purpose.

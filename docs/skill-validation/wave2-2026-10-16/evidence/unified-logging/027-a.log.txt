@@ -1,4 +1,0 @@
-[2026-10-16T09:46:59.010-0300][info][gc] Using Serial
-[0.352s][info][os,thread] JavaThread detaching (name: "main", tid: 19332).
-[0.352s][info][os,thread] Thread attached (tid: 19332, stack: 0x0000003ac5600000 - 0x0000003ac5500000 (1024K) ).
-[0.353s][info][class,load] java.lang.Shutdown source: shared objects file

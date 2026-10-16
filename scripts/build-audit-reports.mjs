@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { format } from 'prettier';
 
@@ -346,6 +346,7 @@ for (const record of records) {
     );
   }
 }
+mkdirSync(auditRoot, { recursive: true });
 writeFileSync(
   join(auditRoot, 'INVENTORY.md'),
   await format(`${inventoryLines.join('\n')}\n`, { parser: 'markdown' }),

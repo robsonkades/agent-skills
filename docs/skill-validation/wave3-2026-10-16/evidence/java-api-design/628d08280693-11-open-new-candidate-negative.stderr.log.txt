@@ -1,2 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: new name changed the consumer result
-	at client.NewClient.main(NewClient.java:10)

@@ -1,7 +1,7 @@
 # Cronograma de skills de arquitetura de microserviços
 
 Data: 30/09/2026. Status: oito skills implementadas em 1.0.0; verificação global aprovada.
-Resultados e limites estão no [registro de implementação](skill-validation/microservices-architecture-2026-09-30.md).
+Resultados e limites estão no [registro de implementação](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/microservices-architecture-2026-09-30.md).
 
 O horizonte inicial é de **seis semanas relativas ao início da execução**, supondo até
 duas frentes de autoria e um coordenador para integração e revisão. É uma previsão de
@@ -19,7 +19,7 @@ serviços, borda, descoberta, confiança e entrega independente. Cada skill deve
 uma decisão especializada, uma falha a prevenir e um resultado verificável.
 
 A referência explícita são os **oito pilares já aplicados às skills Spring** na
-[revisão de 29/09/2026](skill-validation/spring-eight-pillars-2026-09-29.md).
+[revisão de 29/09/2026](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/spring-eight-pillars-2026-09-29.md).
 O formato de planejamento segue o [plano das skills Spring](spring-skills-plan.md),
 com os critérios de [skill-engineering](../skills/skill-engineering/SKILL.md) e do
 [prompt completo de revisão](skill-review-prompt.md).

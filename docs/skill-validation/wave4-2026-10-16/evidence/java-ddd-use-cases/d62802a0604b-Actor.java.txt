@@ -1,3 +1,0 @@
-package com.example.application;
-import com.example.domain.tenant.TenantID;
-public record Actor(String name, TenantID tenantId) {}

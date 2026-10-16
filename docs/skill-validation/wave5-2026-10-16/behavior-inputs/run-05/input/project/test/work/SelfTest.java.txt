@@ -1,1 +1,0 @@
-package work; public final class SelfTest { public static void main(String[] args){ if(!Normalizer.normalize("a\rb\r\nc\n").equals("a\nb\nc\n"))throw new AssertionError("normalization"); System.out.println("SelfTest PASS"); }}

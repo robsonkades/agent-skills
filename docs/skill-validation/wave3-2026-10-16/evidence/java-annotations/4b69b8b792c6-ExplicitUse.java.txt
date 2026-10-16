@@ -1,3 +1,0 @@
-package example;
-@UseCodec(value = LocalCodec.class, alternatives = {LocalCodec.class, DefaultCodec.class})
-public final class ExplicitUse {}

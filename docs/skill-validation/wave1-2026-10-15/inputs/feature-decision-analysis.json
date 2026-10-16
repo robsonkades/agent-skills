@@ -1,6 +1,0 @@
-{
-  "skill": "feature-decision-analysis",
-  "common": "Review the log and update records only. Accepted decision ED12, marked AGENT_PROPOSED and owned by a named engineering owner, chose the replica subject to Product's maximum data age. T4, using the same query, dataset, and configuration at 90 queries per second for 2 hours, shows replica data ages of up to 4 minutes. The primary meets freshness requirements with a 12% CPU increase, within the 20% allowance. This evidence does not cover future workloads. An old slide reports subsecond execution latency. You may record findings and propose changes, but may not replace ED12 or implement. Include a scoped lesson and a trigger for reopening the decision.",
-  "scenarioA": "Product P8 permits a maximum data age of 10 minutes.",
-  "scenarioB": "Product P8 permits a maximum data age of 30 seconds."
-}

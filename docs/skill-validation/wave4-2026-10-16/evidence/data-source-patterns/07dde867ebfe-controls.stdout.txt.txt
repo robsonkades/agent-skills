@@ -1,6 +1,0 @@
-java=25.0.3+9-LTS
-database=2.2.224 (2023-09-17)
-Outcome[minimum=1, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]
-Outcome[minimum=0, sharedGuard=false, firstRows=1, secondRows=1, firstGuardRows=-1, secondGuardRows=-1, available=0, firstVersion=1, secondVersion=1]
-Outcome[minimum=1, sharedGuard=true, firstRows=1, secondRows=0, firstGuardRows=1, secondGuardRows=0, available=1, firstVersion=1, secondVersion=0]
-PASS: 8 assertions; three deterministic two-transaction controls; no ORM or PostgreSQL executed

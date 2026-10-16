@@ -1,5 +1,0 @@
-# Customer migration review draft
-
-Status: READY, pending review.
-
-The owner smoke test still lists both customer rows with unchanged IDs and names. The lookup name and selected column labels are retained. Therefore the view preserves consumer access and this slice is ready. Owner maintenance remains required, applications must remain read-only, and operational recovery timing has not been measured.

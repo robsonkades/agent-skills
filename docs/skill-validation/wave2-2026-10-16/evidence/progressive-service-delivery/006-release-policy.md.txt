@@ -1,7 +1,0 @@
-# Release policy
-Controller and CRDs: Argo Rollouts v1.8.3. This fixture is for repository review; no cluster is available or authorized.
-The checkout Rollout already serves stable release-41; this change updates it to release-42. It is not an initial deployment or rollback-window shortcut, and no full-promotion override is authorized.
-Before moving from configured canary weight 20 to 40, this release requires three successful candidate-verification measurements. A failed measurement requires containment. Missing or delayed evidence does not authorize advancement.
-The verification metric is a candidate-specific business check: one returned value 1 is positive evidence, one value 0 is a detected correctness failure, and empty/missing/provider failures are unresolved. The test fixture's 70-second initial delay is intentional. It is permissible to wait up to 180 seconds at weight 20 while investigating; then contain exposure.
-The 40-weight stage has an existing manual pause. All other release compatibility and recovery prerequisites have already been reviewed; preserve their owners and contracts.
-The stable/canary services and nginx ingress referenced by the Rollout are managed and separately validated by the deployment owner. This review establishes configuration semantics only; actual request admission, routing convergence and provider behavior still require an isolated controller/routing exercise. Do not create replacement infrastructure.

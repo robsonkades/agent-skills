@@ -1,7 +1,0 @@
-public final class Client {
-    public static void main(String[] args) {
-        String value = Api.identity("ok");
-        if (!value.equals("ok")) throw new AssertionError(value);
-        System.out.println("PASS: client invoked identity");
-    }
-}

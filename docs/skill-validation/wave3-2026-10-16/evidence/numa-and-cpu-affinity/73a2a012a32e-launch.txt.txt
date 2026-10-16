@@ -1,2 +1,0 @@
-numactl --cpunodebind=0 --membind=0 java -XX:+UseG1GC -Xms1g -Xmx1g -jar cache-service.jar
-

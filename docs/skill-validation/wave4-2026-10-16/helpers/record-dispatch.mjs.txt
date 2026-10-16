@@ -1,6 +1,0 @@
-import fs from 'node:fs';
-const report='C:/git/agent-skills/docs/skill-validation/wave4-2026-10-16';
-const manifest=JSON.parse(fs.readFileSync(report+'/behavior-manifest.frozen.json.txt','utf8'));
-const observations=manifest.runs.map((r,i)=>({runId:r.runId,agent:'/root/wave4_actor'+String(i+1).padStart(2,'0'),forkTurns:'none',modelOverride:null,dispatched:true,observationRecordedAt:new Date().toISOString(),timingNote:'Recorded after successful spawn calls, not an exact launch timestamp.',dispatchMessage:`Execute a tarefa local descrita integralmente em ${r.taskPath}. Sua responsabilidade exclusiva é ${r.runId}/output; não está sozinho, não altere arquivos de outros. Leia primeiro TASK.md, depois somente os inputs e recursos que ele permite; mantenha os limites de leitura/escrita definidos. Não leia este repositório nem outras skills/experimentos. Sem agentes filhos. Conclua a análise e verificações proporcionais, salve decisão e registros de execução nos caminhos especificados, e declare allWritesStopped ao terminar.`}));
-fs.writeFileSync(report+'/behavior-dispatch.json',JSON.stringify({runs:observations},null,2)+'\n');
-console.log(JSON.stringify({recorded:observations.length}));

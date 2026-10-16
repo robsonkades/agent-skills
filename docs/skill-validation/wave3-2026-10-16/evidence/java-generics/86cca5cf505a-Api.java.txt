@@ -1,4 +1,0 @@
-import java.io.Serializable;
-public final class Api {
-    public static <T extends Comparable<T> & Serializable> T identity(T value) { return value; }
-}

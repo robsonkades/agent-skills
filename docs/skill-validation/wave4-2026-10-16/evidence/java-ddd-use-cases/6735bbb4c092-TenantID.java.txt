@@ -1,2 +1,0 @@
-package com.example.domain.tenant;
-public record TenantID(String value) { public TenantID { java.util.Objects.requireNonNull(value); } }

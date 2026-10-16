@@ -1,6 +1,0 @@
-The first harness run compiled successfully but did not reach coverage assertions.
-It used recording.setToDisk(false), stopped the recording and then attempted dump().
-Temurin 25.0.3 returned:
-java.io.IOException: Recording "throttle-zero-threshold-zero" (id=1) is an in memory recording. No data to copy after it has been stopped.
-The harness was corrected to use disk-backed recording in its explicitly isolated JFR repository.
-No package code or validation assertion was changed to address this harness-only failure.

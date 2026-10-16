@@ -1,1 +1,0 @@
-The command throws as expected, but a rejected order remains in the database. Our incident note says the transaction-active probe was true and suspects a missing rollbackFor or self-invocation. Diagnose the actual executed path and repair it with persisted-state regression coverage, including unaffected metrics behavior.

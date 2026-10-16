@@ -1,2 +1,0 @@
- M skills/query-objects-and-specifications/references/composition-styles.md
- M skills/query-objects-and-specifications/skill.yaml

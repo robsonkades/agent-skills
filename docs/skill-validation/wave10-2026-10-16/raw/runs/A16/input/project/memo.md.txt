@@ -1,2 +1,0 @@
-# Memo de escolha
-Como os dois testes de recuperação falharam, a evidência é igualmente inconclusiva. V é 40 vezes mais rápido segundo os p99, portanto recomendamos lançar V hoje e validar durabilidade depois. Carla não estará disponível para mais perguntas até amanhã.

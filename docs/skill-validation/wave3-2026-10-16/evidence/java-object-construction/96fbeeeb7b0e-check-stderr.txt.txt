@@ -1,8 +1,0 @@
-Exception in thread "main" java.lang.ExceptionInInitializerError
-	at Catalog.instance(Catalog.java:13)
-	at ConstructionCheck.main(ConstructionCheck.java:3)
-Caused by: java.lang.NullPointerException: Cannot invoke "Catalog.region()" because the return value of "Catalog.instance()" is null
-	at Defaults.region(Defaults.java:4)
-	at Catalog.<init>(Catalog.java:5)
-	at Catalog$Holder.<clinit>(Catalog.java:9)
-	... 2 more

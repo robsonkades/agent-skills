@@ -1,8 +1,0 @@
-import java.util.function.IntUnaryOperator;
-
-public final class HotWork implements IntUnaryOperator {
-    @Override
-    public int applyAsInt(int value) {
-        return Integer.rotateLeft(value ^ 0x5a5a5a5a, 7) * 31 + value;
-    }
-}

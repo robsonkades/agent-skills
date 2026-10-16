@@ -1,6 +1,0 @@
-[0.005s][info][gc] Using Serial
-[0.044s][info][gc] GC(0) Pause Full (System.gc()) 2M->1M(15M) 2.611ms
-[0.076s][info][gc] GC(1) Pause Full (System.gc()) 1M->1M(15M) 1.456ms
-[0.108s][info][gc] GC(2) Pause Full (System.gc()) 1M->1M(15M) 1.306ms
-[0.140s][info][gc] GC(3) Pause Full (System.gc()) 1M->1M(15M) 1.490ms
-[0.174s][info][gc] GC(4) Pause Full (System.gc()) 1M->1M(15M) 1.971ms

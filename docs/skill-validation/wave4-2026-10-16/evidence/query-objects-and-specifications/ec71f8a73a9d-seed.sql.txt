@@ -1,8 +1,0 @@
-INSERT INTO customer_order (id, tenant_id, customer_id, status, placed_at) VALUES
- (101, 'alpha', 10, 'OPEN',    '2026-10-15T10:00:00Z'),
- (102, 'alpha', 10, NULL,      '2026-10-15T10:00:00Z'),
- (103, 'alpha', 10, 'SETTLED', '2026-10-15T09:00:00Z'),
- (104, 'alpha', 10, 'VOID',    '2026-10-15T09:00:00Z'),
- (105, 'alpha', 99, 'OPEN',    '2026-10-15T10:30:00Z'),
- (106, 'beta',  10, NULL,      '2026-10-15T11:00:00Z'),
- (107, 'alpha', 10, 'OPEN',    '2026-10-15T09:30:00Z');

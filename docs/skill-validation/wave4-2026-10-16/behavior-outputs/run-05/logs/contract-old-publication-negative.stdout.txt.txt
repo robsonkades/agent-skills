@@ -1,8 +1,0 @@
-lone CR: FAIL; actual=A<CR>B; expected=A<LF>B
-LF: PASS; actual=A<LF>B; expected=A<LF>B
-CRLF: PASS; actual=A<LF>B; expected=A<LF>B
-mixed endings: FAIL; actual=A<CR>B<LF>C<LF>D; expected=A<LF>B<LF>C<LF>D
-consecutive CR: FAIL; actual=<CR><CR>; expected=<LF><LF>
-empty: PASS; actual=; expected=
-unchanged text: PASS; actual=Report 42; expected=Report 42
-Cases=7; failures=3

@@ -1,5 +1,0 @@
-Review this Java 21 implementation against its published interface contract. Return supported SOLID findings with the smallest safe recommendation, or explain why no change is justified. Do not create new abstractions merely to change the design.
-
-All callers use the PayloadReader interface and follow its documented ownership contract. Inputs are bounded to 64 KiB by the adapter. Existing return values and IOException behavior are public contracts; changing the interface promise requires a consumer migration that is outside this review.
-
-Inspect observable behavior through the interface, including a failed read. Explain what a test can establish and what its resource fixture might conceal. Do not upgrade Java or add dependencies.

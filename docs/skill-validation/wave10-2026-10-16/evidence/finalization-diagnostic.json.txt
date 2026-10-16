@@ -1,9 +1,0 @@
-{
- "initialCommand":"node finalize.mjs",
- "initialExit":1,
- "failedCheck":"README local link final-audit.json",
- "cause":"The final audit checked the link to its own output before creating that output. All previous raw hashes, registry comparison and excerpt checks had completed; this was report-generation ordering, not an actor result or npm verify failure.",
- "correction":"Collect links, create the audit output, then validate every local link including the audit itself. No link assertion was removed or exempted.",
- "preservedScript":"final-audit-before-self-link.mjs",
- "rerun":"Full finalization rerun required; final-audit.json and integrity-final.json record successful checks only when command exits0."
-}

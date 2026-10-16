@@ -1,8 +1,0 @@
-package orders;
-import java.util.Objects;
-public final class Order {
-    private final Customer customer;
-    public Order(Customer customer) { this.customer = Objects.requireNonNull(customer); }
-    public Customer customer() { return customer; }
-    public String deliveryZone() { return customer.contact().deliveryZone(); }
-}

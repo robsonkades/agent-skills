@@ -1,6 +1,0 @@
-{
-  "skill": "feature-decomposition",
-  "common": "Prepare delivery only. Accepted SC01 covers shipment status; BAC01 covers display; BAC02 covers tenant protection. RES01 is the producer, RES02 is the screen, and RES03 is help for the existing retry behavior. Owners and files are disjoint, and the help behavior is confirmed. CT01 specifies PENDING and SENT, 404 for an unknown shipment, and 403 for cross-tenant access; a matching fixture exists. The producer has not been implemented or deployed. Final screen validation needs real integration. Provide a breakdown with stable IDs, coverage, dependencies, and readiness.",
-  "scenarioA": "CT01 is accepted.",
-  "scenarioB": "CT01 is unaccepted and awaiting its owner; the fixture is a proposal, and there is no other contract."
-}

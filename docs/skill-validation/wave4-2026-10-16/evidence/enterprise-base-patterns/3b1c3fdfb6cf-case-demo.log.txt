@@ -1,4 +1,0 @@
-second lookup before insert = Optional.empty
-cache entries = 2
-first report = 2.0 kg
-second report = 2.00 kg

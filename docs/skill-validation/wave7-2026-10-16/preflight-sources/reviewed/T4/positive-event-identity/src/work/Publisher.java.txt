@@ -1,4 +1,0 @@
-package work;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
-public class Publisher {private final JdbcTemplate jdbc;public Publisher(JdbcTemplate jdbc){this.jdbc=jdbc;}@Transactional public void create(String id,String payload){jdbc.update("insert into orders values (?,?)",id,payload);jdbc.update("insert into outbox values (?,?,false)","event:"+id,payload);}}

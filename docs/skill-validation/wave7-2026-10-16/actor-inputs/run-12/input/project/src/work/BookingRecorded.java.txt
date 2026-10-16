@@ -1,1 +1,0 @@
-package work; public record BookingRecorded(String id,String receiptText) {}

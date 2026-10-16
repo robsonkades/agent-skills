@@ -1,1 +1,0 @@
-Validated: good exit 0; combiner-mutant exit 1; merge-mutant exit 1.

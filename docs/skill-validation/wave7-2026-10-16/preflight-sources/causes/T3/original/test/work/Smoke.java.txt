@@ -1,4 +1,0 @@
-package work;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.jdbc.core.JdbcTemplate;
-public class Smoke {public static void main(String[]args){try(var ctx=new AnnotationConfigApplicationContext(Config.class)){var jdbc=ctx.getBean("ordersJdbc",JdbcTemplate.class);jdbc.execute("drop all objects");jdbc.execute("create table orders(id varchar primary key,sku varchar)");jdbc.execute("create table stock(sku varchar primary key,available int)");jdbc.update("insert into stock values ('sold-out',0)");var svc=ctx.getBean(OrderService.class);try{svc.place("example","sold-out");}catch(IllegalStateException expected){System.out.println("command rejected");}System.out.println("active="+svc.lastObservedActive()+" committed orders="+jdbc.queryForObject("select count(*) from orders",Integer.class));}}}

@@ -1,1 +1,0 @@
-package work; public interface OrderNotifier {void accepted(String id);}

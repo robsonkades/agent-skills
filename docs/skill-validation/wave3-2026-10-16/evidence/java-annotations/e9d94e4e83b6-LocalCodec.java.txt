@@ -1,2 +1,0 @@
-package example;
-public final class LocalCodec implements Codec {}

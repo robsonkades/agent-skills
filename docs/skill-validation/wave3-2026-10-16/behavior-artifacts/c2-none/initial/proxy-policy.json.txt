@@ -1,7 +1,0 @@
-{
-  "listener": "127.0.0.1:15001",
-  "route": "fixed-service-a",
-  "connect_start": "first_client_data",
-  "inspection_timeout_ms": 1000,
-  "inspection_buffer_limit": 4096
-}

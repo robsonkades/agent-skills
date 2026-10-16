@@ -1,5 +1,0 @@
-PASS publisher atomicity after outbox constraint failure
-PASS bounded replay and distinct events with equal payloads
-PASS receiver rejection propagates and preserves pending work
-PASS same-token different-payload rejection remains enforced
-

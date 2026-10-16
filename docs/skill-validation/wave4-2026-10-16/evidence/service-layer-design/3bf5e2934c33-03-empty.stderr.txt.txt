@@ -1,2 +1,0 @@
-Raw history: /c/Users/robso/AppData/Local/Temp/skills-wave4-validation-Ceekn9/service-layer-design-validation/03-empty/service-history.5oNdP9kf
-warning: controlled empty selection

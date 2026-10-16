@@ -1,3 +1,0 @@
-{
-  "acceptsLegacyForm": true
-}

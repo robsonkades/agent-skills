@@ -2,7 +2,7 @@
 
 Data: 27/09/2026. Status: três pacotes criados e validados para Spring Boot 4.x e Java 25.
 Este documento preserva os critérios de criação; a evidência executada e suas limitações
-estão no [registro de validação](skill-validation/spring-skills-2026-09-27.md).
+estão no [registro de validação](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/spring-skills-2026-09-27.md).
 Inclui o aprofundamento solicitado sobre convenções de beans, capacidade Web, Hibernate
 e o exemplo de configuração de um agendador com SQL Server fornecido na conversa.
 Inclui também a comparação com as skills de `piomin/claude-ai-spring-boot`, com origem,

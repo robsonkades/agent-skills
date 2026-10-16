@@ -1,6 +1,0 @@
-{
-  "skill": "feature-contract-definition",
-  "common": "Revise CT07 r2, whose status is In review, only. OBJ1 requires one supplier pickup job per request; BR1 prohibits duplicates; BAC1 permits an observable unknown outcome plus operator reconciliation. Engineering owns recovery, and the HTTP supplier has been selected. The proposal is to retry a timed-out POST /jobs twice within 30 seconds, using a fresh key. Lookup is eventually consistent, so absence is inconclusive. EV1 contains one successful sandbox request. Draft the recovery contract and TC/EV statuses without implementation or acceptance.",
-  "scenarioA": "Supplier revision 7 guarantees at most one job within 24 hours for the same tenant and key with an identical payload, including concurrent requests; a changed payload is rejected.",
-  "scenarioB": "Supplier revision 7 uses keys only for correlation and provides no deduplication guarantee."
-}

@@ -1,1 +1,0 @@
-Positive affordable withdrawals must atomically subtract the amount and return true. False means insufficient funds only; contention is not a reason for refusal. No deposits or fees occur in this fixture. The holdGate hook supports controlled tests without changing production synchronization.

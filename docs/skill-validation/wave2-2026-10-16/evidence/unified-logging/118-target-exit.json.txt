@@ -1,5 +1,0 @@
-{
-  "pid": 25284,
-  "code": 0,
-  "signal": null
-}

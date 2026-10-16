@@ -1,2 +1,0 @@
-import java.util.List;
-class ParameterizedTestFromObject { boolean test(Object value) { return value instanceof List<String>; } }

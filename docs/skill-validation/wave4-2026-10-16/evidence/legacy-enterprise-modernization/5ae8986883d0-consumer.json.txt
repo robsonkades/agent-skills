@@ -1,7 +1,0 @@
-{
-  "databaseFamily": "PostgreSQL",
-  "majorVersion": 17,
-  "principal": "lm_w4_app_a",
-  "queryFile": "consumer-query.sql",
-  "writeOperations": []
-}

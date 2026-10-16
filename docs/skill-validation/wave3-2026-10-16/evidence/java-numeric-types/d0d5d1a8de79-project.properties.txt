@@ -1,2 +1,0 @@
-release=17
-amount.parser=ledger

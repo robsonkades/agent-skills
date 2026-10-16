@@ -1,2 +1,0 @@
-policy=caller-runs phase=saturation normalReturns=3 received=[first, second, third] completed=[first, second, third] recovered=[] unresolved=[] permits=3 executorTerminated=true threads=[first@pool-1-thread-1, third@main, second@pool-1-thread-1]
-exit=0 expected=0

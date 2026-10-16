@@ -1,2 +1,0 @@
-OverridableSafeVarargs.java:2:34: compiler.err.varargs.invalid.trustme.anno: java.lang.SafeVarargs, (compiler.misc.varargs.trustme.on.virtual.varargs: <T>accept(T...))
-1 error

@@ -1,3 +1,0 @@
-# Project contracts
-
-Java 17, no preview, no external dependency needed for source review. The active runtime.properties is passed unchanged to RuntimeFactory. These sessions and controllers run on one editing thread; no background mutator accesses a draft. Text is bounded to 2 KiB and each controller keeps at most one previous snapshot. Draft state is intentionally replaceable for local undo. No requirement asks for a durable draft history or named branches. The source set and QA notes are synthetic fixtures, not a production incident.

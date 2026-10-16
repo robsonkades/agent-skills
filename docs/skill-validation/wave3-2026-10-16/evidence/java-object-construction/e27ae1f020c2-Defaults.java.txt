@@ -1,7 +1,0 @@
-public final class Defaults {
-    private Defaults() {}
-    public static String region() {
-        return Catalog.instance().region();
-    }
-}
-

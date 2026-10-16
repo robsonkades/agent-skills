@@ -1,3 +1,0 @@
-package fixture;
-import java.io.*;
-public final class RetryPolicy implements Serializable { @Serial private static final long serialVersionUID = 1L; }

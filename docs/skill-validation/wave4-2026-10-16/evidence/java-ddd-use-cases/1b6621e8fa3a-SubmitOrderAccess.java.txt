@@ -1,7 +1,0 @@
-package com.example.application.order.submit;
-import com.example.application.Actor;
-import com.example.domain.order.Order;
-public interface SubmitOrderAccess {
-    void requireActionAllowed(Actor actor);
-    void requireResourceAllowed(Actor actor, Order order);
-}

@@ -1,2 +1,0 @@
-UnsupportedRecipient.java:7:21: compiler.err.cant.apply.symbol: kindname.method, copyFirst, java.util.List<? extends T>,java.util.List<? super T>, java.util.List<java.lang.Double>,java.util.List<java.lang.Integer>, kindname.class, GenericProbe, (compiler.misc.incompatible.bounds: T, (compiler.misc.upper.bounds: java.lang.Integer,java.lang.Object), (compiler.misc.lower.bounds: java.lang.Double))
-1 error

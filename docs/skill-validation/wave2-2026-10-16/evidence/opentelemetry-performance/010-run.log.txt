@@ -1,5 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: callback parent: expected=8e96d832d3f03ffa, actual=57f9b21fcb88d4c0
-	at ParentageContractsTest.same(ParentageContractsTest.java:31)
-	at ParentageContractsTest.verifyParent(ParentageContractsTest.java:53)
-	at ParentageContractsTest.one(ParentageContractsTest.java:91)
-	at ParentageContractsTest.main(ParentageContractsTest.java:144)

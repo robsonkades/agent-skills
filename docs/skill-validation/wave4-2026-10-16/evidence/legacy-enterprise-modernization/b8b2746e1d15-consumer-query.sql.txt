@@ -1,1 +1,0 @@
-SELECT cod_cli, nome_cli FROM lm_w4.cliente ORDER BY cod_cli;

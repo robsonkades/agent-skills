@@ -1,3 +1,0 @@
-# Working diagnosis
-
-The callee has only 9 bytecodes, so an existing compiled-code size limit cannot be relevant. Increase MaxInlineSize globally to ensure this caller inlines it and improves performance.

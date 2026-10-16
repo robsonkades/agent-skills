@@ -1,6 +1,0 @@
-{
-  "skill": "feature-implementation-plan",
-  "common": "Provide a plan only. Accepted T1, ED1, and TC1 require that duplicates cause no logical repeat under the current CT. RES01 is the provider; RES02 is consumer fixture tests; RES03 is an independent help typo; RES04 is real integration. Owners and files are disjoint. The current plan makes RES01 wait for RES02 to complete and vice versa, followed by RES04. CT01 r1 uses a global jobId, with a matching fixture; EV01 contains passing r1 consumer tests only. The fully specified r2 uses (tenantId, jobId): deduplicate within the same tenant and treat different tenants as distinct. There is no r2 fixture or check. Revise the order, acceptance mapping, amendment, and readiness without implementation or deployment.",
-  "scenarioA": "The engineering owner has ACCEPTED r2, which supersedes r1.",
-  "scenarioB": "The engineering owner has PROPOSED r2; r1 remains accepted."
-}

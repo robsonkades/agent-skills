@@ -1,9 +1,0 @@
-import java.util.concurrent.*;
-final class ObserverPattern {
- static <Result> CompletableFuture<Result> observe(CompletableFuture<Result> actualDone, ConcurrencyGate.Lease lease, long remainingNanos) {
-CompletableFuture<Result> released =
-    actualDone.whenComplete((value, failure) -> lease.close());
-return released.copy().orTimeout(remainingNanos, TimeUnit.NANOSECONDS);
-
- }
-}

@@ -1,1 +1,0 @@
-delivery.mode=LOCAL_PREPARE

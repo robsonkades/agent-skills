@@ -1,9 +1,0 @@
-14240:
-
-__ CodeHeapStateAnalytics lock wait took      0.000 seconds _________
-
-
-CodeHeapStateAnalytics: Function 'MethodNames' is only available as part of function 'all'
-
-__ CodeHeapStateAnalytics total duration      0.000 seconds _________
-

@@ -1,2 +1,0 @@
-Picked up JAVA_TOOL_OPTIONS: 
-Picked up _JAVA_OPTIONS: 

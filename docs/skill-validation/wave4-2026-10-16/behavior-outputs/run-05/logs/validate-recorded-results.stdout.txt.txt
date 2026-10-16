@@ -1,1 +1,0 @@
-Verified recorded outcomes, 7 candidate contract cases, Java 17 class versions, old/new/rollback results, and unchanged input hashes.

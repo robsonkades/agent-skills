@@ -1,1 +1,0 @@
-Release contract: example.pricing is internal to this application. All implementations and callers are maintained in this repository and rebuilt/deployed together. No third-party implementation or binary extension compatibility is supported. Public visibility is incidental to package organization.

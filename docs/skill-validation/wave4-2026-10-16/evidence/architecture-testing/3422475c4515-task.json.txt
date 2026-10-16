@@ -1,4 +1,0 @@
-{
-  "request": "Review whether the current architecture guard and CI result support the accepted dependency policy. Inspect the supplied policy, production code, test and build evidence. Report the supported conclusion, any concrete mismatch and the smallest relevant verification or correction. Findings only: do not edit application code, change the accepted architecture or add dependencies.",
-  "context": "All relevant source for this single-module example is included. CI uses release 17 compilation and Temurin 25.0.3 runtime, ArchUnit 1.5.0 and JUnit Jupiter 5.11.4. The recorded CI test passed; assess the scope of that evidence. Controlled temporary checks may be used."
-}

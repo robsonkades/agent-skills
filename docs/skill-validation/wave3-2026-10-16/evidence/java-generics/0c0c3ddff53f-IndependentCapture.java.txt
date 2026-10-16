@@ -1,5 +1,0 @@
-import java.util.List;
-class IndependentCapture {
-    static void cross(List<? extends Number> a, List<? extends Number> b) { copy(a, b); }
-    static <E> void copy(List<E> a, List<E> b) { b.add(a.get(0)); }
-}

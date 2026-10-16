@@ -1,9 +1,0 @@
-{
-  "command": "npm run verify",
-  "cwd": "C:/git/agent-skills",
-  "startedAt": "2026-10-16T12:56:56.904Z",
-  "finishedAt": "2026-10-16T12:57:53.287Z",
-  "exit": 0,
-  "log": "verify.log.txt",
-  "node": "v25.6.1"
-}

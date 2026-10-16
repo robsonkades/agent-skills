@@ -1,5 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: outer MDC restored: expected=request, actual=null
-	at CompositionContractsTest.equal(CompositionContractsTest.java:44)
-	at CompositionContractsTest.inContext(CompositionContractsTest.java:54)
-	at CompositionContractsTest.recipe(CompositionContractsTest.java:73)
-	at CompositionContractsTest.main(CompositionContractsTest.java:168)

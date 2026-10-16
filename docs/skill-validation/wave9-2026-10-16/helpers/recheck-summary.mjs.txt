@@ -1,6 +1,0 @@
-import fs from 'node:fs';
-const dir='C:/git/agent-skills/docs/skill-validation/wave9-2026-10-16/rechecks';
-for(const name of fs.readdirSync(dir).filter(p=>p.endsWith('.json')).sort()){
- const r=JSON.parse(fs.readFileSync(dir+'/'+name,'utf8'));
- console.log(JSON.stringify({id:r.id,case:r.caseId,probe:r.probe?.run?.stdout??r.probe?.stdout,verification:r.verification?.stdout?.trim().split(/\r?\n/).slice(-1)??null,negativeCompile:r.counterfactual?.compile?.exit??null,negativeRun:r.counterfactual?.run?.exit??null,negativeError:r.counterfactual?.run?.stderr?.split(/\r?\n/).find(s=>s.includes('AssertionError'))??null,negativeFirstLines:r.counterfactual?.run?.stdout?.split(/\r?\n/).slice(0,1)??null}));
-}

@@ -1,1 +1,0 @@
-package shop.orders; import java.math.BigDecimal; public final class RunBefore { public static void main(String[] args) { new OrderConfirmer().confirm(new Order("A-1", new BigDecimal("12.50"), "customer@example.test")); } }

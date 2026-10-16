@@ -1,1 +1,0 @@
-package shop.smtp; public final class SmtpClient { public SmtpClient(String host, int port) {} public void send(SmtpMessage message) { System.out.println("v2|" + message.recipient() + "|" + message.subject() + "|" + message.body()); } }

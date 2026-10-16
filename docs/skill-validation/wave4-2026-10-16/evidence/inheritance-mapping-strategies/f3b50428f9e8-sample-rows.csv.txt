@@ -1,3 +1,0 @@
-table,id,tenant_id,provider_reference,amount,detail
-card_payment,101,tenant-1,PAY-42,10.00,4242
-bank_transfer,102,tenant-1,PAY-42,20.00,DE89370400440532013000

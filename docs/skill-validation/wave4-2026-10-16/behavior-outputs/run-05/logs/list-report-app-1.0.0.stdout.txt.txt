@@ -1,6 +1,0 @@
-META-INF/
-META-INF/MANIFEST.MF
-com/
-com/example/
-com/example/app/
-com/example/app/ReportApp.class

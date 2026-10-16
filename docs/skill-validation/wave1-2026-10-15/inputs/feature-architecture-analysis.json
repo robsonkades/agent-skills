@@ -1,6 +1,0 @@
-{
-  "skill": "feature-architecture-analysis",
-  "common": "Produce an impact map only for the accepted draft-preview r2 scope DRAFT7; do not implement. The system uses Java 17. In contracts/invoice-events.md r4, CT01 defines invoice.created as meaning that the invoice is posted. PostedPublisher line 40 emits after posting; the sole inventoried consumer, accounting/InvoiceConsumer line 25, subscribes exactly to invoice.created and books every event. CT01 in accounting/contracts.md r8 and the test at line 30 require this behavior. The schema allows DRAFT or POSTED. The owners are known; posted behavior is unchanged.",
-  "scenarioA": "The new DraftPublisher emits DRAFT to invoice.created; the new feature description says that the invoice exists and may be a draft. Schema validation passes.",
-  "scenarioB": "The new DraftPublisher emits DRAFT to the new topic invoice.draft-created; the old topic is unchanged."
-}

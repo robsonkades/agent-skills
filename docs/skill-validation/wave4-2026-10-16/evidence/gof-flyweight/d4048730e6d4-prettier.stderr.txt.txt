@@ -1,2 +1,0 @@
-[warn] skills/gof-flyweight/references/when-sharing-pays.md
-[warn] Code style issues found in the above file. Run Prettier with --write to fix.

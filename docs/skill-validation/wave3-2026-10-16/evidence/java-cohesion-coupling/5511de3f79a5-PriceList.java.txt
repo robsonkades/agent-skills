@@ -1,3 +1,0 @@
-package inv.pricing;
-import java.math.BigDecimal;
-public interface PriceList { BigDecimal unitPrice(String sku); }

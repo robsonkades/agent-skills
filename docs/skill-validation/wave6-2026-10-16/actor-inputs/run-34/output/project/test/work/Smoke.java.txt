@@ -1,7 +1,0 @@
-package work;
-public final class Smoke { public static void main(String[] args) {
- int[] buffer={10,20}; Message message=new Message(buffer);
- System.out.println("before-recycle="+message.checksum());
- buffer[0]=100; buffer[1]=200;
- System.out.println("after-recycle="+message.checksum());
-} }

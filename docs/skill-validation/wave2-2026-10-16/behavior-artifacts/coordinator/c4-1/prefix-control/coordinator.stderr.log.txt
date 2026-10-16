@@ -1,3 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: candidate.properties key=user:2 expected primary=n2 replicas=[n2, n3, n4] actual primary=n1 replicas=[n1, n3, n2]
-	at RoutingCompatibilityChecks.check(RoutingCompatibilityChecks.java:28)
-	at RoutingCompatibilityChecks.main(RoutingCompatibilityChecks.java:14)

@@ -1,5 +1,0 @@
-{
-  "checks": 13,
-  "result": "PASS",
-  "scope": "Only active entryPoint differs; eight ordinary source/task/grammar artifacts are byte-identical. No agent evaluation."
-}

@@ -1,3 +1,0 @@
-Checking formatting...
-[warn] skills/compilation-and-inlining-logs/references/inlining-diagnosis.md
-[warn] Code style issues found in the above file. Run Prettier with --write to fix.

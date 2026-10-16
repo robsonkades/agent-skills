@@ -1,7 +1,0 @@
-{
-  "acceptedBy": "Payments product owner",
-  "providerReferenceUniqueWithin": "tenant-and-payment-method",
-  "comparison": "Exact case-sensitive reference value; null references are invalid.",
-  "primaryKey": "Generated technical identity; providerReference is a separate business identifier.",
-  "historicalRecords": "Preserve retained payment history. Any conflicting records require an explicit product-approved resolution; do not silently delete or rename them."
-}

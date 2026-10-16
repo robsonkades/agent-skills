@@ -1,6 +1,0 @@
-PASS supplied client-first / deferred: complete; upstream attempts/accepts=1/1; completions=1
-PASS client-first / immediate control: complete; upstream attempts/accepts=1/1; completions=1
-PASS server-first / deferred control: inspection-expired; upstream attempts/accepts=0/0; completions=0
-PASS server-first / immediate control: complete; upstream attempts/accepts=1/1; completions=1
-PASS 4/4 cases; original fixture hashes unchanged; all case sockets and listeners closed.
-node verify-handshake.mjs exit=0

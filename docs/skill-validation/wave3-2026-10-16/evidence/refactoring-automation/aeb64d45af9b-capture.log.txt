@@ -1,7 +1,0 @@
-ERROR The recipe produced an error. Please report this to the recipe author.
-OBSERVED state=TO_BE_PROCESSED
-OBSERVED failure=java.lang.IllegalStateException: injected result error before file application
-OBSERVED A.exists=false
-OBSERVED B.regularFile=false
-OBSERVED B.directory=true
-OBSERVED localNotes=keep this unrelated local work

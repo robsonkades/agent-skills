@@ -1,7 +1,0 @@
-PASS platform: no-interrupt shared-channel control
-PASS platform: interrupted borrower invalidates shared channel
-PASS platform: separate task-owned channel preserves other reader
-PASS virtual: no-interrupt shared-channel control
-PASS virtual: interrupted borrower invalidates shared channel
-PASS virtual: separate task-owned channel preserves other reader
-PASS 6 cases; initial-interrupt contract only, no blocking-latency claim

@@ -1,3 +1,0 @@
-PASS: JDK wall-clock access without framework classes
-PASS: fixed clock before/at/after deadline without DI framework
-PASS: confirmation, invalid-ID control and composition

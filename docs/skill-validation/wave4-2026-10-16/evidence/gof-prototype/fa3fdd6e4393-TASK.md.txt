@@ -1,1 +1,0 @@
-Review the configured draft copier against CONTRACT.md and its ordinary caller. Identify any contract violation on the selected path, make the smallest justified correction, or preserve an adequate implementation. Provide focused evidence and state the limits of validation. Keep the Java baseline and domain ownership contract.

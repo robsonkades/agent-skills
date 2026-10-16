@@ -1,3 +1,0 @@
-strategy=org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy
-exceptional=false parent=parent
-exceptional=true parent=parent

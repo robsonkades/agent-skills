@@ -1,2 +1,0 @@
-Class Name,Objects,Shallow Heap,
-DumpFixture$Payload,128,2048,

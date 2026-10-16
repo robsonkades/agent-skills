@@ -1,7 +1,0 @@
-# Accepted contract: optional post-commit receipt
-
-The booking and stock reservation form the mandatory atomic business unit. The receipt is a best-effort local projection: a normal valid receipt must persist after the command succeeds, while an invalid receipt must not fail the already successful business call or undo its booking/reservation. Receipt body storage remains limited to 12 characters; do not truncate or increase this constraint to hide rejection. Receipt work must run only after source commit, when an independent READ_COMMITTED connection can see the booking. Receipt loss on failure or application interruption is accepted and no recovery store is required. Keep the current synchronous scheduling; no executor is requested.
-
-Unavailable stock must fail the business command and leave no booking/receipt/reservation. A nontransactional publication must not create a receipt. Retain public BookingService.place(id,sku,receiptText), event identity, stock rule and ReceiptObserver.beforeWrite's meaning: called inside the actual writer immediately before the write. The observer is diagnostic and does not authorize changing transaction behavior. No broker, durable registry or dependency addition is authorized.
-
-When called within an existing business transaction, the service joins that unit; its caller remains completion owner. Preserve this REQUIRED participation. A later owner failure must roll back the mandatory state; no receipt may survive a rollback of its booking.

@@ -1,6 +1,0 @@
-import java.math.BigDecimal;
-// Test fixture: exact decimal arithmetic only; no real currency/rounding policy is implied.
-record Money(BigDecimal amount) {
-    Money minus(Money other) { return new Money(amount.subtract(other.amount)); }
-    Money times(BigDecimal fraction) { return new Money(amount.multiply(fraction)); }
-}

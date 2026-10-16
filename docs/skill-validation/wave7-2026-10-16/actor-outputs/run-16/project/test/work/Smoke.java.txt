@@ -1,4 +1,0 @@
-package work;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.jdbc.core.JdbcTemplate;
-public class Smoke {public static void main(String[]args){try(var ctx=new AnnotationConfigApplicationContext(Config.class)){var jdbc=ctx.getBean(JdbcTemplate.class);jdbc.execute("drop all objects");jdbc.execute("create table orders(id varchar primary key,payload varchar)");jdbc.execute("create table outbox(event_id varchar primary key,payload varchar,done boolean)");ctx.getBean(Publisher.class).create("smoke","normal");if(!ctx.getBean(Dispatcher.class).replayOne()||ctx.getBean(ReceiverClient.class).count()!=1)throw new AssertionError("normal delivery");System.out.println("PASS ordinary publisher/replay path");}}}

@@ -1,4 +1,0 @@
-STDOUT
-sequential-controls=2 PASS
-
-STDERR

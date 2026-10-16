@@ -1,6 +1,0 @@
-public interface SettlementSteps {
-    Batch load(RunContext context);
-    ValidatedBatch validate(Batch batch, RunContext context);
-    Results settle(ValidatedBatch batch, RunContext context);
-    void record(Results results, RunContext context);
-}

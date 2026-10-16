@@ -1,1 +1,0 @@
-# Optional DDL artifact settings for this verification task

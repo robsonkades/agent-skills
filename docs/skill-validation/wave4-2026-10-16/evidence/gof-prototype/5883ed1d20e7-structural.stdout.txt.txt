@@ -1,7 +1,0 @@
-{
-  "skill": "gof-prototype",
-  "version": "1.2.4",
-  "issues": [],
-  "referenceFilesRouted": 2,
-  "localLinksAndAnchorsChecked": 4
-}

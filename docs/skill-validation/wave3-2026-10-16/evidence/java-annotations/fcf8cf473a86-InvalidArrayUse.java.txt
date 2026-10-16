@@ -1,3 +1,0 @@
-package example;
-@UseCodec(value = LocalCodec.class, alternatives = {String.class})
-public final class InvalidArrayUse {}

@@ -1,6 +1,0 @@
-{
-  "skill": "collaborative-feature-definition",
-  "common": "Update Engineering Analysis E2 concisely, without implementation. Mira owns Product P7; Alex, a different senior person, owns engineering. Accepted P7 says that customers can save and resume their own draft orders for exactly 168 hours after the last save. BAC01 covers saving and resuming; BAC02 covers expiry. CT01 and TC01 cover retention; CT02 and TC02 cover access and are independent of retention. E2 records that retention capacity is unknown; no experiment has been performed. Engineering asked whether seven days means 168 hours. Alex asks you to incorporate Mira's reply and identify the next useful work.",
-  "scenarioA": "Mira replies: Yes, exactly 168 hours, as P7 says; the current definition is unchanged.",
-  "scenarioB": "Mira replies: Change it to 720 hours. I approve Product P8 with that change; everything else remains as in P7."
-}

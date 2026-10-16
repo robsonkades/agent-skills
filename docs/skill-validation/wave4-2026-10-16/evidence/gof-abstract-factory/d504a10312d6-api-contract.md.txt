@@ -1,6 +1,0 @@
-# Consumer contract
-
-Report creation must use a paginator, renderer and stylesheet belonging to the requested format.
-The supplied App caller is the only supported consumer. Composition is owned by this module;
-callers keep a supplied bundle together. Arbitrary client-constructed bundles are outside this
-module's supported API. Verification covers the module's supported assemblies and outputs.

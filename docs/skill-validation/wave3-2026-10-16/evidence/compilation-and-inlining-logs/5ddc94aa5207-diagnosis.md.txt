@@ -1,3 +1,0 @@
-# Working diagnosis
-
-The extraction indicates that the workload has no tier-4 compilation records. Increase FreqInlineSize globally to fix the slow hot path.

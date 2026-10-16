@@ -1,7 +1,0 @@
-public final class OldMain {
-    public static void main(String[] args) {
-        int value = new Model.Text("four").accept(new OldOp());
-        if (value != 4) throw new AssertionError("old path changed");
-        System.out.println("OLD_PATH=" + value);
-    }
-}

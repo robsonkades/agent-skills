@@ -1,2 +1,0 @@
- M skills/java-ddd/references/project-conventions.md
- M skills/java-ddd/skill.yaml

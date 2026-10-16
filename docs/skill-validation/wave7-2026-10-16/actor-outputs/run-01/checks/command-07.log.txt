@@ -1,3 +1,0 @@
-EXPECTED FAILURE OwnerFailure
-STATE REQUIRES_NEW counterexample: orphan receipt survives owner rollback: booking/header/detail=0/1/1, stock=20
-PASS proposal rejected: writer booking=0; header/detail remain after booking rollback

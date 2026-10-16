@@ -1,3 +1,0 @@
-# Current ownership proposal
-
-Two requests are ELIGIBLE from one availability snapshot. Replace StockEligibility with InventoryDomainService, move the availability lookup and Order.submit into it, and let one service own the full operation. This centralization should guarantee the shared stock limit, so the Order guards and provider orchestration need no further review. The active runtime setting has not yet been considered.

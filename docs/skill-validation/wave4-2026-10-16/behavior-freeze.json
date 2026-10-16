@@ -1,8 +1,0 @@
-{
-  "frozenAt": "2026-10-16T15:46:00.742Z",
-  "manifestSha256": "0aa9b8543c810826c5237bc82a91f2275da4f316ac237a5fdc654a1acab43283",
-  "runs": 6,
-  "dispatched": 0,
-  "allInputsMaterialized": true,
-  "onlyDecisiveInputDifference": "input/project/delivery.json"
-}

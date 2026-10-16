@@ -1,7 +1,0 @@
-Picked up JAVA_TOOL_OPTIONS: 
-Picked up _JAVA_OPTIONS: 
-src\cli\demo\cli\CliPreview.java:7: error: cannot access Sort
-        return page.page() + ":" + page.size() + ":" + page.sort();
-                                                                ^
-  class file for org.springframework.data.domain.Sort not found
-1 error

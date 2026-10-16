@@ -1,4 +1,0 @@
-SELECT customer_label FROM invoices
-WHERE tenant_id = 71 AND (active = true OR amount >= 100)
-ORDER BY customer_label;
-

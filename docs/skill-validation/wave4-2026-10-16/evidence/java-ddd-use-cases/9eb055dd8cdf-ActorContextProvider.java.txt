@@ -1,2 +1,0 @@
-package com.example.application;
-public interface ActorContextProvider { Actor current(); }

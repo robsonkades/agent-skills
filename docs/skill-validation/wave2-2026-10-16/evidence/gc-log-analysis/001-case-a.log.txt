@@ -1,7 +1,0 @@
-[100.000s][info][gc] GC(17) Major Collection (Warmup)
-[100.010s][info][gc,phases] GC(17) Y: Pause Mark Start (Major) 0.100ms
-[100.100s][info][gc,phases] GC(17) Y: Pause Mark End 0.200ms
-[100.110s][info][gc,phases] GC(17) Y: Pause Relocate Start 0.100ms
-[100.800s][info][gc,phases] GC(17) O: Pause Mark End 0.200ms
-[100.810s][info][gc,phases] GC(17) O: Pause Relocate Start 0.100ms
-[101.000s][info][gc] GC(17) Major Collection (Warmup) 2048M(50%)->1024M(25%) 1.000s

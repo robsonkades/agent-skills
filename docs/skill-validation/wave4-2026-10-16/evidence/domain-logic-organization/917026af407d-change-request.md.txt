@@ -1,9 +1,0 @@
-# Reservation module review
-
-The service owns the checks while the gateway is mostly SQL. A proposal would add
-a Stock entity with a reserve(quantity) method, then let the service persist its
-remaining quantity. Another suggestion is a StockTableModule. Review whether either
-reorganization is justified for the current flow, including what happens if two
-requests for 60 units of SKU-1 overlap. Propose the smallest justified action and
-the validation needed before approval. Keep the existing business contract and
-runtime baseline; this is a design review, not approval to deploy a migration.

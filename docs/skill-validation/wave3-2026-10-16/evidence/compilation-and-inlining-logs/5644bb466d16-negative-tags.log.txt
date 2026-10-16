@@ -1,5 +1,0 @@
-[0.100s][info][jit,compilation-extra]   11    b  4       CompilationProbe::hot (16 bytes)
-[0.100s][info][jit,compilation,extra]   11    b  4       CompilationProbe::hot (16 bytes)
-[0.100s][info][jit,inlining         ]   11    b  4       CompilationProbe::hot (16 bytes)
-[0.100s][info][gc,phases            ]   11    b  4       CompilationProbe::hot (16 bytes)
-[0.100s][info][jit,compilation  ]   11    b  3       CompilationProbe::hot (16 bytes)

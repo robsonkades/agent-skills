@@ -1,7 +1,0 @@
-{
-  "status": "passed",
-  "reviewWords": 537,
-  "resultJsonValid": true,
-  "evidenceMatchesVerification": true,
-  "solutionMatchesTestedHash": true
-}

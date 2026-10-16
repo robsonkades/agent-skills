@@ -1,8 +1,0 @@
-runtime=25.0.3+9-LTS
-operation=G1CollectFull, safepointId=3
-operation.eventThread={javaName=null, osName=VM Thread, javaId=-1, osId=16412}
-operation.caller={javaName=requester-control, osName=requester-control, javaId=3, osId=8616}
-jdk.SafepointBegin.eventThread={javaName=null, osName=VM Thread, javaId=-1, osId=16412}, durationNanos=12300
-jdk.SafepointStateSynchronization.eventThread={javaName=null, osName=VM Thread, javaId=-1, osId=16412}, durationNanos=11000
-jdk.SafepointEnd.eventThread={javaName=null, osName=VM Thread, javaId=-1, osId=16412}, durationNanos=120900
-PASS: VM producer differs from requester. No delayed-thread claim tested.

@@ -1,2 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: ClientRouter placement differs from accepted epoch E
-	at RoutingCompatibilityCheck.main(RoutingCompatibilityCheck.java:38)

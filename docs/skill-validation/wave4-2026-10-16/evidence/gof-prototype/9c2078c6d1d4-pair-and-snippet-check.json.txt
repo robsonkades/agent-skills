@@ -1,6 +1,0 @@
-{
-  "identicalFiles": 4,
-  "changedFile": "application.properties",
-  "difference": "copy.context=field versus operation",
-  "shippedGraphMethodByteEquivalentAfterIndentation": true
-}

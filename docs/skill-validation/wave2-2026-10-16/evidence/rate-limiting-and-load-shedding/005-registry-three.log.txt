@@ -1,6 +1,0 @@
-event=0 key=A cost=10 admitted=true retryAfter=PT0S registrySize=1
-event=1 key=B cost=1 admitted=true retryAfter=PT0S registrySize=2
-event=2 key=C cost=1 admitted=true retryAfter=PT0S registrySize=3
-event=3 key=A cost=10 admitted=false retryAfter=PT9H59M59.9868761S registrySize=3
-maximumKeys=3 acceptedByA=10 envelope=10.000006143 elapsedSeconds=0.022113100
-PASS per-identity envelope for this workload

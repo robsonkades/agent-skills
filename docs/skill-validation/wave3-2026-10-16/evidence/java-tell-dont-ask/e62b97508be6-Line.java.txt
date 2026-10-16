@@ -1,8 +1,0 @@
-package example;
-import java.util.Objects;
-public record Line(String sku, int quantity) {
-    public Line {
-        Objects.requireNonNull(sku, "sku");
-        if (quantity <= 0) throw new IllegalArgumentException("Positive quantity required");
-    }
-}

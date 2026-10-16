@@ -1,7 +1,0 @@
-package orders;
-import java.util.Objects;
-public final class Contact {
-    private final String deliveryZone;
-    public Contact(String deliveryZone) { this.deliveryZone = Objects.requireNonNull(deliveryZone); }
-    public String deliveryZone() { return deliveryZone; }
-}

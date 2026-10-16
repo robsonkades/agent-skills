@@ -1,2 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: equal logical keys must resolve
-	at ValueConsumer.main(ValueConsumer.java:10)

@@ -1,9 +1,0 @@
-# Accepted report contract
-
-Java source target: 17. Execution is sequential; no concurrent callers in this task.
-Entries are immutable values. Keep order, duplicates and signed cent amounts.
-A report exposes a read-only list: callers must not add, remove or reorder entries.
-
-A report is a live read-only view of the catalog. Later load() calls must be visible through reports already open, including their entries and total. Opening a new report is not required to observe a load().
-
-This contract is accepted by the product owner and applies to this work. Do not change it.

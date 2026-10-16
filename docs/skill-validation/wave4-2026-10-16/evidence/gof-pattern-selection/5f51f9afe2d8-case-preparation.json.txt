@@ -1,6 +1,0 @@
-{
-  "inputsParsed": 2,
-  "soleDifference": "config/eligibility.json.approval",
-  "criteriaSeparated": true,
-  "agentRuns": 0
-}

@@ -1,3 +1,0 @@
-quote.cache.enabled=true
-runtime.overrides=runtime/overrides.properties
-catalog.file=data/catalog.csv

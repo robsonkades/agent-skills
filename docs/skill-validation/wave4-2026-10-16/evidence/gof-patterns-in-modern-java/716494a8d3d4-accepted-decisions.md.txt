@@ -1,8 +1,0 @@
-# Accepted decisions
-
-- This is a closed, application-owned document hierarchy. Third-party subtype plugins are not supported.
-- Rendering operations live outside the model. The sealed hierarchy and pattern switches were accepted; no request to revert to a Visitor class hierarchy exists.
-- Every input selected by deployment.json must render successfully. Silent omission and generic unknown-node output are not accepted.
-- The version catalog below is immutable release source. Deployment.json selects the versions actually loaded by one batch job; it is the authoritative rollout configuration.
-- Source and artifact version numbers do not authorize a Java upgrade or preview flags.
-- No startup, throughput, allocation or maintenance-cost improvement has been measured for this release.

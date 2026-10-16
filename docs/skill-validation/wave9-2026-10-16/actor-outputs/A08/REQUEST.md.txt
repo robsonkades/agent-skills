@@ -1,1 +1,0 @@
-Fix RetryPlan.java against the checked-in scheduling contract, preserve its signature, and add Verification.java exercising the actual implementation. Explain the arithmetic and the boundary this helper does not enforce. Do not modify contract.md, Smoke.java or run.mjs.

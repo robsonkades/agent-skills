@@ -1,3 +1,0 @@
-# Orders API contract
-
-Owner: Orders module. Approved consumer contract: the immutable Order -> Customer -> Contact graph, including its accessors and zone value, is a published read schema for shipping consumers. Each hop is a supported schema commitment; schema changes require coordinated consumer migration. Order.deliveryZone() is an equivalent convenience accessor, not a required boundary. This deliberate read model has no hidden runtime I/O.

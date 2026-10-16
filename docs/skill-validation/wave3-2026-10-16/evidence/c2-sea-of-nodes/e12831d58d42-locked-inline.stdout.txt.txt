@@ -1,8 +1,0 @@
-CompileCommand: An error occurred during parsing
-Error: VM option 'PrintInlining' is diagnostic and must be enabled via -XX:+UnlockDiagnosticVMOptions.
-Line: 'PrintInlining,InlineGate::caller'
-
-Usage: '-XX:CompileCommand=<option>,<method pattern>' - to set boolean option to true
-Usage: '-XX:CompileCommand=<option>,<method pattern>,<value>'
-Use:   '-XX:CompileCommand=help' for more information and to list all option.
-

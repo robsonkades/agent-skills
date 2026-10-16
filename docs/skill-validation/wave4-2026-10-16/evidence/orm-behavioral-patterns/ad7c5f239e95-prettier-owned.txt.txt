@@ -1,8 +1,0 @@
-command=["C:\\Program Files\\nodejs\\node.exe","C:\\git\\agent-skills\\node_modules\\prettier\\bin\\prettier.cjs","--check","skills/orm-behavioral-patterns/skill.yaml","skills/orm-behavioral-patterns/references/unit-of-work-and-identity-map.md"]
-cwd=C:/git/agent-skills
-exit=0
-STDOUT
-Checking formatting...
-All matched files use Prettier code style!
-
-STDERR

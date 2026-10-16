@@ -1,1 +1,0 @@
-[2026-10-16T12:08:35.995-0300][0.082s] cid=   3     level=4 TrapLevelProbe.hot(ZI)I trap_bci=1 unstable_if reinterpret pc=0x0000018a11945844 relative_pc=0x0000000000000044

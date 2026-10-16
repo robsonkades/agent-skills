@@ -1,2 +1,0 @@
-IndependentCapture.java:3:77: compiler.err.cant.apply.symbol: kindname.method, copy, java.util.List<E>,java.util.List<E>, java.util.List<compiler.misc.type.captureof: 1, ? extends java.lang.Number>,java.util.List<compiler.misc.type.captureof: 2, ? extends java.lang.Number>, kindname.class, IndependentCapture, (compiler.misc.incompatible.eq.bounds: E, compiler.misc.type.captureof: 2, ? extends java.lang.Number,compiler.misc.type.captureof: 1, ? extends java.lang.Number)
-1 error

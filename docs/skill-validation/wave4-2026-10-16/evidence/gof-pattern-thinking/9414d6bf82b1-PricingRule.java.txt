@@ -1,5 +1,0 @@
-package example.pricing;
-import java.math.BigDecimal;
-public interface PricingRule {
-    BigDecimal quote(int units);
-}

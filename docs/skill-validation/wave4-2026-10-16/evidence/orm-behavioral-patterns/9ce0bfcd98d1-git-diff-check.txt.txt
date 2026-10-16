@@ -1,6 +1,0 @@
-command=["git","diff","--check","--","skills/orm-behavioral-patterns"]
-cwd=C:/git/agent-skills
-exit=0
-STDOUT
-
-STDERR

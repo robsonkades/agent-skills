@@ -1,6 +1,0 @@
-import java.io.IOException;
-
-interface Store {
-    boolean exists(String key) throws IOException;
-    void write(String key, byte[] bytes) throws IOException;
-}

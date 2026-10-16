@@ -1,1 +1,0 @@
-public record Sku(String value) {}

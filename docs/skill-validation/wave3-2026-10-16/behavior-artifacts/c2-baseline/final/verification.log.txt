@@ -1,5 +1,0 @@
-{"node":"v25.6.1","kind":"local adapter-contract model","protocol":{"first_message":"client"},"policy":{"listener":"127.0.0.1:15001","route":"fixed-service-a","connect_start":"first_client_data","inspection_timeout_ms":1000,"inspection_buffer_limit":4096}}
-{"scenario":"client-first PING/PONG","result":"PASS","upstreamAttempts":1,"upstreamConnections":1,"upstreamReceived":"PING\n","clientReceived":"PONG\n","events":["downstream-accepted","client-tcp-connected","downstream-received-data","upstream-connect-start","upstream-accepted","upstream-received-data","client-received-data","protocol-complete"],"cleanup":"sockets destroyed; listeners closed; timers cleared"}
-{"scenario":"TCP-only idle control","result":"PASS","upstreamAttempts":0,"upstreamConnections":0,"upstreamReceived":"","clientReceived":"","events":["downstream-accepted","client-tcp-connected","inspection-expired"],"cleanup":"sockets destroyed; listeners closed; timers cleared"}
-PASS: 2 scenarios; 2500 ms watchdog per scenario; no retries.
-Exit code: 0

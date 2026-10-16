@@ -1,5 +1,0 @@
-PASS no precombination: 10.00
-PASS one precombination pass: 10.00
-PASS repeated precombination: 10.00
-PASS mixed raw and combined: 10.00
-PASS empty/identity controls

@@ -1,2 +1,0 @@
-requestedTraversal=prefix
-prefixLength=2

@@ -1,7 +1,0 @@
-{
-  "skill": "enterprise-transactions",
-  "version": "1.3.5",
-  "issues": [],
-  "referenceFilesRouted": 2,
-  "localLinksAndAnchorsChecked": 2
-}

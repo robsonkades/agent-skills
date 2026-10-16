@@ -1,6 +1,0 @@
-{
-  "minimumSupportedRuntime": 17,
-  "firstElement": "Return the first element of a nonempty List<String>.",
-  "emptyList": "Throw java.util.NoSuchElementException.",
-  "scope": "Toolchain modernization only; preserve the minimum supported consumer runtime."
-}

@@ -1,9 +1,0 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import {pathToFileURL} from 'node:url';
-const repo='C:/git/agent-skills',report=repo+'/docs/skill-validation/wave6-2026-10-16';
-const prettier=await import(pathToFileURL(repo+'/node_modules/prettier/index.mjs'));
-const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(d+'/'+e.name):[d+'/'+e.name]);
-const files=walk(report).filter(f=>/\.(json|md)$/.test(f));let changed=0;
-for(const f of files){const config=await prettier.resolveConfig(f);const original=fs.readFileSync(f,'utf8');const formatted=await prettier.format(original,{...config,filepath:f});if(original!==formatted){fs.writeFileSync(f,formatted);changed++;}}
-console.log(JSON.stringify({checked:files.length,formatted:changed,scope:path.basename(report),rawTxtArtifactsUntouched:true}));

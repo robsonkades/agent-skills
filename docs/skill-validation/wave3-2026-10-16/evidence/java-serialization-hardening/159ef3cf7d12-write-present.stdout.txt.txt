@@ -1,1 +1,0 @@
-Wrote seven bounded synthetic streams, including invalid scalar and denied-hook controls

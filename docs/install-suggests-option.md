@@ -1,8 +1,7 @@
 # Instalação opcional de sugestões
 
-`--with-suggests` inclui somente sugestões diretas das skills solicitadas, conforme
-o alcance escolhido para esta implementação. A revisão de metadados está em
-[Auditoria de suggests](skill-validation/suggests-review-2026-09-30.md).
+`--with-suggests` inclui somente sugestões diretas das skills solicitadas e suas
+dependências.
 
 ## Uso e alcance
 
@@ -156,38 +155,10 @@ gravar instalações, receipts ou lockfile. Cache/staging seguem as garantias at
 O instalador oferece atomicidade por pacote, não uma transação única de todo o comando;
 pacotes já concluídos não são revertidos em conjunto se um pacote posterior falhar.
 
-## Simulação anterior à implementação
-
-A [simulação por skill](skill-validation/suggests-installation-2026-09-30.json) usa o
-resolver real com manifestos em memória. Foi realizada durante a análise do catálogo
-de 2026-09-30, antes da implementação da flag. Não executa comandos da flag nem
-instala em configurações reais; os números abaixo são esse registro histórico.
-
-| Skill solicitada               | Sem sugestões | Com sugestões diretas e suas dependências |
-| ------------------------------ | ------------- | ----------------------------------------- |
-| java-ddd                       | 8             | 38                                        |
-| java-ddd-aggregates            | 1             | 5                                         |
-| java-ddd-value-objects         | 1             | 7                                         |
-| spring-boot                    | 7             | 46                                        |
-| spring-boot-clean-architecture | 1             | 57                                        |
-| microservices-architecture     | 31            | 127                                       |
-| clean-delivery-workflow        | 172           | 173                                       |
-| java-performance               | 127           | 169                                       |
-
-As 305 expansões diretas foram resolvidas sem conflitos no catálogo analisado, que expunha
-uma versão por pacote. Isso não prova todos os cenários com múltiplas versões,
-registries externos ou locks antigos.
-
-Foram encontradas 299 sugestões cujo destino já tinha um caminho de dependência de volta à origem.
-Elas são válidas como sugestões, mas mostram por que convertê-las em arestas do
-grafo obrigatório seria incorreto. Uma travessia indiscriminada de todos os vínculos
-a partir de `java-ddd` alcançaria 293 pacotes, reforçando o alcance direto escolhido.
-
 ## Contrato de validação
 
-Os cenários abaixo definem a cobertura necessária. A simulação histórica acima não
-substitui os testes de aplicação e CLI, e este documento não registra uma execução
-da suíte:
+Os cenários abaixo definem a cobertura necessária nos testes de aplicação e CLI;
+este documento não registra uma execução da suíte:
 
 - Sem flag, preservar o comportamento existente; com flag, incluir apenas sugestões
   das raízes originais, suas dependências e deduplicar nomes.

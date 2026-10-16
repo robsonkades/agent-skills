@@ -1,5 +1,0 @@
-package com.example.application;
-
-public abstract class UseCase<C, O> {
-    public abstract O execute(final C command);
-}

@@ -1,3 +1,0 @@
-Review the capture feature before release. A proposal suggests adding a command bus and replacing the coordinator because it has callbacks. Inspect the implementation, selected assembly, consumer contract and driver boundary. Identify whether the current protocol satisfies the contract; apply the smallest justified correction or preserve it if adequate. Add a focused regression check and explain the evidence behind the decision.
-
-Work only in this supplied fixture, keep Java17 without preview or new dependencies, and distinguish local callback checks from integration with a physical device. Do not infer correctness or a defect from class names alone.

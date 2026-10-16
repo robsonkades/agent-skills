@@ -1,9 +1,0 @@
-import fixture.RetryPolicy;
-import java.io.*;
-import java.nio.file.*;
-public final class MissingWriter {
-    public static void main(String[] args) throws Exception {
-        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(Path.of(args[0])))) { out.writeObject(new RetryPolicy()); }
-        System.out.println("Wrote RetryPolicy with UID 1 and omitted maxRetries descriptor");
-    }
-}

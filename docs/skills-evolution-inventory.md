@@ -8,6 +8,10 @@ Complementa o [roadmap](skills-evolution-roadmap.md). A classificação A–M ap
 as 258 entradas de `SKILLS.md`; as outras 47 foram classificadas para este plano.
 N e O são famílias propostas para Spring e DDD. Isso não altera o dicionário oficial.
 
+Os relatórios e as capturas das avaliações concluídas permanecem no histórico do Git,
+no commit `c769bd8663c3318e71017c21d0409a052807316b`. Os links dos registros abaixo
+apontam para essa revisão; o roadmap e este inventário continuam na árvore de trabalho.
+
 **Estado no snapshot: revisão individual neste programa ainda não iniciada.** A presença
 na tabela não significa que a skill é deficiente ou que nunca foi revisada. Reutilizar
 a evidência existente antes de criar novos casos; atualizar o estado com um registro
@@ -16,28 +20,28 @@ de revisão e validação quando a onda for executada.
 Execução posterior: a cobertura de revisão individual alcançou os 305 nomes:
 onda 1 (29), onda 2 (138), onda 3 (63), onda 4 (68) e onda 5 (7 nomes de Base/Piloto).
 Estados, versões, evidências e limites estão nos registros das
-[ondas 1](skill-validation/wave1-quality-2026-10-16/README.md),
-[2](skill-validation/wave2-2026-10-16/README.md),
-[3](skill-validation/wave3-2026-10-16/README.md),
-[4](skill-validation/wave4-2026-10-16/README.md) e
-[5](skill-validation/wave5-2026-10-16/README.md).
-O [registro anterior da onda 1](skill-validation/wave1-2026-10-15.md) também permanece.
+[ondas 1](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave1-quality-2026-10-16/README.md),
+[2](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave2-2026-10-16/README.md),
+[3](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave3-2026-10-16/README.md),
+[4](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave4-2026-10-16/README.md) e
+[5](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave5-2026-10-16/README.md).
+O [registro anterior da onda 1](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave1-2026-10-15.md) também permanece.
 Essa cobertura não conclui o piloto experimental nem demonstra ganho geral de eficácia;
 os relatórios distinguem revisão, controles técnicos e avaliações de agentes.
 As versões da tabela abaixo preservam o snapshot de planejamento.
 
-A [onda 6](skill-validation/wave6-2026-10-16/README.md) avaliou `java-memory-model`
+A [onda 6](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave6-2026-10-16/README.md) avaliou `java-memory-model`
 em 36 tentativas: seis casos, três condições e duas repetições. Houve empate entre
 ausência da skill, 1.3.5 e 1.3.6, sem ganho observado nesse conjunto. Uma qualificação
 técnica posterior de DCL pertence à versão 1.3.7 e não foi medida nessa comparação.
 
-A [onda 7](skill-validation/wave7-2026-10-16/README.md) avaliou
+A [onda 7](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave7-2026-10-16/README.md) avaliou
 `spring-transactions-and-events` 1.1.0 em 16 tentativas: quatro casos, duas
 condições e duas repetições, com compilação e reexecução independente dos reparos
 e regressões. Houve empate de 8/8 com e sem carregar a skill, sem ganho observado
 nesse recorte; o pacote permaneceu inalterado.
 
-A [onda 8](skill-validation/wave8-2026-10-16/README.md) avaliou
+A [onda 8](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave8-2026-10-16/README.md) avaliou
 `sql-query-performance` 1.2.3 em 16 tentativas: quatro casos, duas condições e
 duas repetições. A reexecução semântica local e o julgamento textual independente
 resultaram em empate de 8/8 com e sem a skill, sem ganho observado nesse conjunto.
@@ -45,7 +49,7 @@ As 12 regressões SQL detectaram variantes incorretas; a execução local usou
 SQLite, sem validar planos ou desempenho do PostgreSQL. O pacote permaneceu
 inalterado.
 
-A [onda 9](skill-validation/wave9-2026-10-16/README.md) corrigiu o exemplo de
+A [onda 9](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave9-2026-10-16/README.md) corrigiu o exemplo de
 `retries-and-backoff` de 1.1.4 para 1.1.5: um efeito desconhecido agora conserva
 o conselho de espera do servidor, inclusive quando o replay é permitido.
 Em 24 sessões, houve empate de 8/8 entre dependências comuns, dependências com
@@ -55,7 +59,7 @@ detectaram o original incorreto; os controles do trecho da skill passaram de
 9/11 para 11/11. Compatibilidade de fonte/API foi verificada na VM 25, sem
 demonstrar garantias de provedor, desempenho ou generalização.
 
-A [onda 10](skill-validation/wave10-2026-10-16/README.md) concluiu o sexto piloto,
+A [onda 10](https://github.com/robsonkades/agent-skills/blob/c769bd8663c3318e71017c21d0409a052807316b/docs/skill-validation/wave10-2026-10-16/README.md) concluiu o sexto piloto,
 `architecture-trade-off-analysis`, de 1.2.4 para 1.2.5. A correção distingue exemplos
 distribuídos de critérios privados, execução de avaliação de isolamento imposto,
 e evidência documental de ganho comportamental. Em 24 sessões novas, com quatro

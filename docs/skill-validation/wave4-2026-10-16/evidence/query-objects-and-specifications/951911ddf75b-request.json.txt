@@ -1,9 +1,0 @@
-{
-  "source": "Authenticated server context and validated paging",
-  "tenantId": "alpha",
-  "allowedCustomers": [
-    10
-  ],
-  "size": 2,
-  "offset": 0
-}

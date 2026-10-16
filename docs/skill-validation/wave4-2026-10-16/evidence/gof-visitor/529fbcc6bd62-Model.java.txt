@@ -1,7 +1,0 @@
-public final class Model {
-    public interface Node { <R> R accept(Visitor<R> visitor); }
-    public interface Visitor<R> { R visitText(Text text); }
-    public record Text(String value) implements Node {
-        public <R> R accept(Visitor<R> visitor) { return visitor.visitText(this); }
-    }
-}

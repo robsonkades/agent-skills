@@ -1,9 +1,0 @@
-export function attachServer(socket, protocol) {
-  if (protocol.first_message === 'server') socket.write('HELLO\n');
-  let received = '';
-  socket.on('data', bytes => {
-    received += bytes.toString();
-    if (received.includes('PING\n')) socket.end('PONG\n');
-  });
-}
-

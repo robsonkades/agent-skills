@@ -1,3 +1,0 @@
-error: release version 28 not supported
-Usage: javac <options> <source files>
-use --help for a list of possible options

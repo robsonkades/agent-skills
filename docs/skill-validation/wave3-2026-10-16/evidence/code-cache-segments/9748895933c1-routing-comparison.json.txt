@@ -1,9 +1,0 @@
-{
-  "helpListsMethodNames": true,
-  "standaloneMethodNamesExitZeroButNoNames": true,
-  "allIncludesMethodNamesSection": true,
-  "allKnownMethodPresent": false,
-  "allMethodNameCoverageCheck": "FAILED_KNOWN_METHOD_MISSING",
-  "codeListIncludesKnownMethod": true,
-  "allDiscardsSnapshot": true
-}

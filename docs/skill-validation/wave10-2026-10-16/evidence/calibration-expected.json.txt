@@ -1,6 +1,0 @@
-{
- "K01":true,"K02":true,"K03":false,
- "K04":true,"K05":true,"K06":false,
- "K07":true,"K08":true,"K09":false,
- "K10":true,"K11":true,"K12":false
-}

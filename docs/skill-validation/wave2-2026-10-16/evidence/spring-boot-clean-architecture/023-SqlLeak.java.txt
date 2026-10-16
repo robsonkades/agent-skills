@@ -1,1 +1,0 @@
-package example.clean.application; public class SqlLeak { public java.sql.Connection connection; }

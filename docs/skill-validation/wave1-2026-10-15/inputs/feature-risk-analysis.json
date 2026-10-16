@@ -1,6 +1,0 @@
-{
-  "skill": "feature-risk-analysis",
-  "common": "Provide release analysis only. RISK17 concerns duplicate charges from archived replay. EV04 consists of a fictional provider contract and sandbox evidence: the same key and payload return the original charge for 48 hours; duplicates are possible later. EV05 at r12 preserves the key and payload, rejects items older than the cutoff with no alternate path, and tests those properties. GAP03 accepts only 24 hours. EV06 is a quiet canary covering only new operations; accounting owns reconciliation. A note claims that residual risk is LOW because the canary is quiet. Assess the next work, evidence, and reopening triggers; do not implement or approve deployment.",
-  "scenarioA": "The cutoff is 24 hours.",
-  "scenarioB": "The cutoff is 7 days."
-}

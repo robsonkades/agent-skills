@@ -1,6 +1,0 @@
-Cohort reconciliation: 9800 known good + 0 known bad + 200 unknown = 10000 eligible logical operations.
-Required good fraction: 0.98
-Required good operations: 9800.00
-Supported good fraction interval: [0.98, 1]
-Conservative bound meets requirement: True
-Demonstrated good-operation margin: 0.00

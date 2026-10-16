@@ -1,3 +1,0 @@
- M skills/java-application-security-basics/SKILL.md
- M skills/java-application-security-basics/references/review.md
- M skills/java-application-security-basics/skill.yaml

@@ -1,9 +1,0 @@
-**Não recomendo liberar V hoje com a evidência atual, inclusive como “piloto reversível” de 100 lotes reais.** Antecipar a reunião e reduzir o volume não dispensam a obrigação de preservar cada trabalho confirmado e produzir seu resultado correto em até 60 segundos sob a carga acordada.
-
-O nome do piloto não torna seus efeitos reversíveis. Uma cópia do binário anterior permite, no máximo, voltar ao código anterior; não restaura trabalhos perdidos nem oferece persistência, replay ou recuperação. Não há ambiente anterior qualificado ao qual retornar. Os 100 lotes reais continuam sujeitos às mesmas obrigações.
-
-As premissas técnicas permanecem distintas: U/u1 perdeu comprovadamente um trabalho confirmado, em ensaio repetido e validado; V/v1 não chegou a receber lotes no ensaio, pois o gerador falhou antes do envio. V permanece sem qualificação, e não demonstradamente defeituoso ou seguro. Tampouco há vantagem comprovada de 40 vezes: 80 ms de confirmação de recebimento e 3.200 ms até resultado pronto medem etapas diferentes. Esses p99 não demonstram o cumprimento do prazo de conclusão para todos os trabalhos.
-
-**Ação concreta para hoje:** corrigir o acesso do gerador ao arquivo de carga e iniciar um ensaio isolado com dados sintéticos, sem trabalhos reais. Confirmar primeiro que os lotes foram enviados; depois rastrear cada confirmação até o resultado correto, provocar quedas e verificar preservação e recuperação. Medir submissão até conclusão, violações dos 60 segundos e evolução do backlog sob o perfil acordado. Documentar os resultados e lacunas para a decisão seguinte.
-
-Isso autoriza produzir evidência hoje, sem prometer que a qualificação terminará hoje. A entrada em operação permanece adiada até demonstrar as obrigações; o prazo da reunião não substitui essa demonstração.

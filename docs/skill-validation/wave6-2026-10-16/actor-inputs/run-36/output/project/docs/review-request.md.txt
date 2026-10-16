@@ -1,2 +1,0 @@
-# Review request
-A proposed approval says the final words reference gives immutable safely initialized contents, so recycling cannot change an existing message. Review that claim and identify the minimal adequate correction if the contract is violated. Distinguish initialized-state visibility from post-construction mutation. Do not upgrade Java or introduce an unrelated runtime framework.

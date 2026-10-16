@@ -1,7 +1,0 @@
-import fs from 'node:fs';
-import assert from 'node:assert/strict';
-const value=JSON.parse(fs.readFileSync(process.argv[2]+'/result.json','utf8'));
-const metrics=value.metrics??value;
-const expected={configuredBeforeMax:6,configuredAfterMax:18,outerAttemptsPerLogical:1.06,wireAttemptsPerLogical:1.6,aggregateGrantUpperBound:130};
-for(const [key,want] of Object.entries(expected)){assert.equal(typeof metrics[key],'number',key+' numeric');assert.ok(Number.isFinite(metrics[key]),key+' finite');assert.ok(Math.abs(metrics[key]-want)<1e-9,key+' value');}
-console.log(JSON.stringify({status:'PASS',checks:5,scope:'Arithmetic of authored fixture, not a fleet measurement'}));

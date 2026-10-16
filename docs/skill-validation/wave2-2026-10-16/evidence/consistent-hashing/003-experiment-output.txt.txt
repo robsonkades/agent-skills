@@ -1,5 +1,0 @@
-PASS unchanged node-point maps and raw-key primary/ordered-replica agreement: 10000 keys
-PASS raw and prefixed clients both preserve join monotonicity
-Join movement: raw=2094/10000, prefixed=2075/10000
-DETECTED serializer control: primary mismatches=7570/10000, ordered-replica mismatches=9596/10000
-Witness user:2: n2 -> n1; replicas [n2, n3, n4] -> [n1, n3, n2]

@@ -1,3 +1,0 @@
-import java.math.BigDecimal;
-@FunctionalInterface
-public interface AmountParser { BigDecimal parse(String text); }

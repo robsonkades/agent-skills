@@ -1,3 +1,0 @@
-[0.028s][info][class,load] work.Main source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06/output/project/.build/app/
-[0.031s][info][class,load] work.Normalizer source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06/output/project/lib/compat.jar
-[0.032s][info][class,load] work.LegacyBanner source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave5-actors-4tJ3OK/run-06/output/project/lib/compat.jar

@@ -1,1 +1,0 @@
-Local fixture artifact: content is irrelevant to strict file resolution.

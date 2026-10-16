@@ -1,6 +1,0 @@
-package example.api;
-import example.limits.ApiLimit;
-public final class RequestHandler {
-    private RequestHandler() {}
-    public static boolean accepts(int count) { return ApiLimit.accepts(count); }
-}

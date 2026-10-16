@@ -1,3 +1,0 @@
-Review the report-export module for the upcoming release. The proposal is to replace the current family bundle with a larger factory hierarchy because the team is unsure whether the current API is sufficient. Investigate the supplied source, build settings, caller and API contract. Correct a demonstrated contract violation if one exists, or preserve adequate construction and explain why. Give a focused regression check and distinguish its coverage from any untested integration behavior.
-
-Work only in the supplied fixture. Use the declared Java baseline, no dependency installation or framework migration. Do not assume that a factory hierarchy is the solution before checking the consumer contract.

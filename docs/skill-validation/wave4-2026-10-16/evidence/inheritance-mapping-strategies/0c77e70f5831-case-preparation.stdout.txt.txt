@@ -1,7 +1,0 @@
-{
-  "cases": 2,
-  "filesPerCase": 6,
-  "decisiveDifference": "business-contract.json only",
-  "actorsRun": 0,
-  "databaseRuns": 0
-}

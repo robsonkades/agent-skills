@@ -1,1 +1,0 @@
-package com.acme.domain; public class Order { private java.sql.Connection connection; }

@@ -1,3 +1,0 @@
-[600.000s][info][gc ] GC(10) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 2ms
-[602.000s][info][gc ] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 4ms
-[604.000s][info][gc ] GC(13) Pause Young (Normal) (G1 Evacuation Pause) 150M->100M(256M) 6ms

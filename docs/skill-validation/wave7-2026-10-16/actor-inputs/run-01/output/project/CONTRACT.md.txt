@@ -1,9 +1,0 @@
-# Accepted contract: mandatory receipt
-
-A booking and its receipt form one atomic local business unit with the stock reservation. Success requires all three persisted changes. An invalid receipt or unavailable stock must fail the call and leave no booking/receipt/reservation. Receipt body storage remains limited to 12 characters; do not truncate or increase this constraint to hide rejection. The receipt observes the uncommitted publisher state as part of the same unit. Do not make it durable in an independent transaction.
-
-The existing event type also has a nontransactional publication use: that publication must not create a receipt. Retain public BookingService.place(id,sku,receiptText), the event identity, the stock rule and ReceiptObserver.beforeWrite's meaning: called inside the actual writer immediately before the write. The observer is diagnostic and does not authorize changing transaction behavior. No new asynchronous worker, broker, durable registry or executor is required.
-
-When called within an existing business transaction, the service joins that unit; its caller remains completion owner. Preserve this REQUIRED participation. A later owner failure must roll back the mandatory state; no receipt may survive a rollback of its booking.
-
-The receipt consists of a header in receipt and body in receipt_detail. These two writes form one receipt unit: no partial header may remain if the body write fails. The 12-character limit applies to receipt_detail.body. Preserve this schema and atomic receipt behavior.

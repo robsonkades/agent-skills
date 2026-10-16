@@ -1,2 +1,0 @@
-root;stable 80
-root;added 20

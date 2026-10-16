@@ -1,8 +1,0 @@
-{
-  "diagnosticBeforeUpdate": {
-    "dctcp_ab_ecn": 4000,
-    "dctcp_ab_tot": 124000
-  },
-  "alphaAfterOneUpdate": 2,
-  "basis": "Byte-weighted ECN feedback"
-}

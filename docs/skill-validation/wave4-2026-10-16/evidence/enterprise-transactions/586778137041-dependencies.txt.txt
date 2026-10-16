@@ -1,7 +1,0 @@
-org.springframework:spring-jdbc:6.2.12
-org.springframework:spring-tx:6.2.12
-org.springframework:spring-beans:6.2.12
-org.springframework:spring-core:6.2.12
-org.springframework:spring-jcl:6.2.12
-Java source target: 17
-No dependency installation is needed for source review.

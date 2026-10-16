@@ -1,5 +1,0 @@
-policy=DiscardOldestPolicy phase=shutdown normalReturns=1 received=[first] completed=[] recovered=[] unresolved=[first] permits=2 executorTerminated=true threads=[]
-Exception in thread "main" java.lang.AssertionError: every received item must complete or recover exactly once; unresolved=[first] duplicateSettlement=[]
-	at QueueConsumer.run(QueueConsumer.java:115)
-	at QueueConsumer.main(QueueConsumer.java:121)
-exit=1 expected=1

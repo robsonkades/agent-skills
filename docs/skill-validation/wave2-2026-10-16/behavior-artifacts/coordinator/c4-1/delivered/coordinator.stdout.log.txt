@@ -1,3 +1,0 @@
-Existing point and join checks passed; moved=2094
-Frozen placement passed: accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]
-Frozen placement passed: candidate.properties key=user:2 primary=n2 replicas=[n2, n3, n4]

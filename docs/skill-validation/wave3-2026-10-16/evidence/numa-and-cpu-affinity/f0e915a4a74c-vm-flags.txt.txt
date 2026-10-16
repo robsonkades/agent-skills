@@ -1,4 +1,0 @@
-UseG1GC = true
-UseNUMA = false
-UseNUMAInterleaving = false
-

@@ -1,8 +1,0 @@
-demo.clients[0].url=https://primary.invalid
-demo.clients[0].timeout=1s
-demo.clients[1].url=https://secondary.invalid
-demo.clients[1].timeout=1s
-demo.clients-by-name.primary.url=https://primary.invalid
-demo.clients-by-name.primary.timeout=1s
-demo.clients-by-name.secondary.url=https://secondary.invalid
-demo.clients-by-name.secondary.timeout=1s

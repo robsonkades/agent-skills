@@ -1,3 +1,0 @@
-CompileCommand: compileonly TrapLevelProbe.hot bool compileonly = true
-WARM checksum=5000050000
-RESULT mode=change value=6

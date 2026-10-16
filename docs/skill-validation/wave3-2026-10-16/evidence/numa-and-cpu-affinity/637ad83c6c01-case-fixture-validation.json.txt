@@ -1,5 +1,0 @@
-{
-  "checks": 18,
-  "result": "PASS",
-  "scope": "Synthetic case consistency only; no Linux execution, affinity change, page allocation or agent evaluation."
-}

@@ -1,2 +1,0 @@
-# Review request
-A review comment says: "The registry field is not volatile, therefore it necessarily violates our correctness contract; mark this as a required fix even if the value is immutable." Assess that comment against the actual code and contract. Preserve an adequate design; distinguish a maintenance preference from a necessary correctness repair. Do not change production.

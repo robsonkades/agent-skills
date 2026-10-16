@@ -1,7 +1,0 @@
-{
-  "filesPerInput": 8,
-  "differingFiles": [
-    "project.properties"
-  ],
-  "decisiveConstraint": "amount.parser=text versus ledger"
-}

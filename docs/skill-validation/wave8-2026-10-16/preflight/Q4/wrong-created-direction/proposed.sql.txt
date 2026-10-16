@@ -1,1 +1,0 @@
-SELECT id,priority,created_at,label FROM tickets WHERE tenant_id=:tenant AND (priority,created_at,id) < (:cursor_priority,:cursor_created,:cursor_id) ORDER BY priority DESC NULLS LAST,created_at ASC,id DESC LIMIT :page_size;

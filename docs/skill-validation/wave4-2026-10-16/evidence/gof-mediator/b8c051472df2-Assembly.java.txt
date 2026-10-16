@@ -1,3 +1,0 @@
-public final class Assembly {
-    public static Delivery completion() { return new Delivery.Inline(); }
-}

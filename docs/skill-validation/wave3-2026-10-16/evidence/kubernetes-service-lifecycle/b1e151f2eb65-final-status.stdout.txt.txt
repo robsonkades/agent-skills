@@ -1,3 +1,0 @@
- M skills/kubernetes-service-lifecycle/SKILL.md
- M skills/kubernetes-service-lifecycle/references/probe-and-shutdown-configuration.md
- M skills/kubernetes-service-lifecycle/skill.yaml

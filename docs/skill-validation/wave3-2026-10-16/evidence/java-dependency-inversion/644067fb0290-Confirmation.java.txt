@@ -1,3 +1,0 @@
-package shop.orders;
-
-public record Confirmation(String recipient, String orderId, String summary) {}

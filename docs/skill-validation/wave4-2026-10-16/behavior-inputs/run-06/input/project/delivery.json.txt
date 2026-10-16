@@ -1,6 +1,0 @@
-{
-  "application": "report-app",
-  "applicationVersion": "1.0.0",
-  "libraryVersion": "1.0.0",
-  "layout": "external"
-}

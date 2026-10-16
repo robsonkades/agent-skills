@@ -1,6 +1,0 @@
-{
-  "skill": "estimation-under-uncertainty",
-  "common": "Scope and capacity are fixed. Duration is measured in working days through deployment acceptance. An illustrative model gives total duration T = 3 with probability 0.65, T = 9 with probability 0.20, and T = 18 with probability 0.15; it is not empirically calibrated. Give the model's P80 from now and interpret it. All ten earlier P80 deadlines have passed: 7 items were on time, 2 were late, and 1 remains unfinished. The lead claims a rate of 7/9 and says that a multiplier fitted to those same outcomes proves improvement. Assess and update these claims.",
-  "scenarioA": "Work has not started.",
-  "scenarioB": "Work remains unfinished after 5 working days; the model and scope are unchanged."
-}

@@ -1,4 +1,0 @@
-afterRelease: checkedRead=REJECTED, scopeAlive=true
-afterReuse: staleReadOnlySegment=99, staleReadOnlyBuffer=99, independentCopy=11
-afterArenaClose: segmentRead=REJECTED, bufferRead=REJECTED
-PASS: logical lease return and arena close have distinct access boundaries

@@ -1,2 +1,0 @@
-good_rate = count(terminal_events where successful and duration_ms <= 100) / count(terminal_events)
-The dashboard has 9800 terminal events, all successful within 100 ms; it reports 100%.

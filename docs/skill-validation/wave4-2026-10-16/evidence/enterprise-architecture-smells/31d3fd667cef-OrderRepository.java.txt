@@ -1,7 +1,0 @@
-package demo.api;
-
-import java.util.List;
-
-public interface OrderRepository {
-    List<Long> findIds(PageRequest page);
-}

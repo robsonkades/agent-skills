@@ -1,2 +1,0 @@
-accepted.properties: key=user:2, primary=n2, ordered replicas=[n2, n3, n4]
-Frozen ClientRouter placement vector passed: accepted.properties

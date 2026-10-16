@@ -1,3 +1,0 @@
-package example;
-@UseCodec(value = String.class)
-public final class InvalidUse {}

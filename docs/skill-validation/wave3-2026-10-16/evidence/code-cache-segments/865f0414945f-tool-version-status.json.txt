@@ -1,4 +1,0 @@
-{
-  "javaExit": 0,
-  "javacExit": 0
-}

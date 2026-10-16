@@ -1,2 +1,0 @@
-PASS NEW: 7 cases and idempotence
-provider=file:/C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-02/input/published/text-core-1.0.1.jar

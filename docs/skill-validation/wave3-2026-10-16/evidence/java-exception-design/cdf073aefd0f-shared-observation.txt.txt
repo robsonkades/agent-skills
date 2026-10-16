@@ -1,5 +1,0 @@
-outcome=java.lang.IllegalArgumentException
-sameAsWork=false
-suppressedCount=0
-causeSameAsWork=true
-closeCalls=1

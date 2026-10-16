@@ -1,9 +1,0 @@
-{
-  "id": "dctcp-accounting-b",
-  "request": "Audit this offline DCTCP diagnostic decoder against the exact attached kernel implementation. Produce a corrected prediction record and adjust the decoder only where the supplied implementation requires it. Explain which counters and snapshot points determine the values. Preserve a supported existing calculation when it is already correct. We are auditing saved data semantics, not changing congestion control, kernel versions or infrastructure.",
-  "implementation": {"version": "mainline Linux v3.18 archival implementation", "source": "sources/linux-3.18-tcp-dctcp.c"},
-  "fixtures": ["window-fixture.json", "proposed-decoder.mjs"],
-  "command": ["node", "proposed-decoder.mjs", "window-fixture.json"],
-  "environment": "Windows with Node 25.6.1; source review and offline arithmetic only. No Linux execution or real packet evidence is supplied.",
-  "constraints": "Do not infer path correctness or faulty ECN feedback solely from a mismatch in a predicted diagnostic. Do not run host sysctls or capture real traffic. Do not assume the algorithm name fixes counter units across versions."
-}

@@ -1,6 +1,0 @@
-{
-  "skill": "quality-gates",
-  "common": "Use quality-gates to assess CI evidence and recommend the next action, plus one useful negative validation for the selector. Policy permits docs-only selection only with a complete list of changes between the base and head and verified absence of build consumers; otherwise, the full existing PR suite is required. At R42, the trusted selector exits with code 0 and reports docs-only. Its list contains docs/help.md, which has no build consumers. Documentation checks pass; compiler, unit, and integration jobs are skipped; the aggregate result is green. Do not change the policy or claim executions beyond the supplied evidence.",
-  "scenarioA": "The change-list API reports complete=true and next_page=null.",
-  "scenarioB": "The API reports complete=false and next_page=2; only the first page was read."
-}

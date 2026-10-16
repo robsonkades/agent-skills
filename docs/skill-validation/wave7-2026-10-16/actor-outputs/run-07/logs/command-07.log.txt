@@ -1,2 +1,0 @@
-PASS failure window: order=1, pending=1, receiver effect=1, checkpoint failure propagated
-

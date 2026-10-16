@@ -1,3 +1,0 @@
-Command: node output/check-artifacts.mjs
-Exit code: 0
-{"status":"passed","copiedFilesPreserved":6,"metrics":{"innerExecutions":12000,"innerEmittedRows":48000,"innerInclusiveWorkMs":780,"capturedExecutionTimeMs":991},"reviewWords":627,"sqlExecuted":false}

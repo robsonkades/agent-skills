@@ -1,2 +1,0 @@
-StrictComparable.java:5:46: compiler.err.cant.apply.symbol.noargs: kindname.method, strictMax, kindname.class, StrictComparable, (compiler.misc.explicit.param.do.not.conform.to.bounds: GenericProbe.Sub, java.lang.Comparable<GenericProbe.Sub>)
-1 error

@@ -3,9 +3,9 @@
 The canonical index of this repository: 258 skills, what each one is for, and which one a given
 request belongs to.
 
-Describes the catalogue after the complete 258-skill Principal/Staff review
-([final audit](docs/audit/AUDIT.md)). Package versions are synchronized from manifests with
-`npm run skills:sync-versions`; the review history is in [CHANGELOG](docs/audit/CHANGELOG.md).
+Describes the 258-skill catalogue covered by the September 2026 review. Package versions
+are synchronized from manifests with `npm run skills:sync-versions`. For all currently
+published packages, see the [registry index](registry/skills.yaml).
 
 ---
 
@@ -3810,7 +3810,7 @@ rows marked **overlap** have more than one plausible one.
 | "Where did we get to on this feature? Someone else started" | `feature-progress-tracking`          | The dossier is the resumption point; the conversation is not                                           |
 
 **31 of 33 now have a single unambiguous owner** — the four unowned rows were the gaps this audit found, and all four have been built; the last three rows arrived with the feature
-engineering suite. The two overlaps are analysed in [GAPS.md](docs/audit/GAPS.md).
+engineering suite. The two overlaps are identified in the table above.
 
 ### Entry points, when the request is vague
 
@@ -3927,8 +3927,7 @@ the overlap noted at m-02 matters more than its severity suggests.
 
 ## 7. Roadmap
 
-Every gap and finding from [AUDIT.md](docs/audit/AUDIT.md) and [GAPS.md](docs/audit/GAPS.md) is
-now either built or decided. Nothing is left in the "open, awaiting a call" state.
+The historical review findings summarized below have been implemented or resolved.
 
 ### Built
 

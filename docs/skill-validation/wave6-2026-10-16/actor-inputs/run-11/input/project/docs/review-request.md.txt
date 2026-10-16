@@ -1,2 +1,0 @@
-# Review request
-The implementation calls join before reading the result. Review whether this is sufficient for the accepted contract and identify a focused remedy if needed. Keep the bounded-wait requirement; do not propose an unbounded wait. Use the supplied controlled check where relevant.

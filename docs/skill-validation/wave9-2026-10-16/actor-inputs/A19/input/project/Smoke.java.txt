@@ -1,1 +1,0 @@
-public final class Smoke { public static void main(String[] args) { RetryPlan.Plan p = RetryPlan.next(0,0,100,0,10,10,2,8,0,3,0,b -> 0); if (!p.admitted()) throw new AssertionError(p); System.out.println("Smoke passed"); } }

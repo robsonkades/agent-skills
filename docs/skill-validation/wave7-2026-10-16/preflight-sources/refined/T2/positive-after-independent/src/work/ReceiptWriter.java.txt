@@ -1,8 +1,0 @@
-package work;
-import org.springframework.jdbc.core.JdbcTemplate;
-public class ReceiptWriter {
- private final JdbcTemplate jdbc; private final ReceiptObserver observer;
- public ReceiptWriter(JdbcTemplate jdbc,ReceiptObserver observer){this.jdbc=jdbc;this.observer=observer;}
- @org.springframework.transaction.annotation.Transactional(propagation=org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
- public void record(BookingRecorded event){observer.beforeWrite(event.id());jdbc.update("insert into receipt(id) values (?)",event.id());jdbc.update("insert into receipt_detail(id,body) values (?,?)",event.id(),event.receiptText());}
-}

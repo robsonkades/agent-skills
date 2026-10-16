@@ -1,6 +1,0 @@
-{
-  "inputsParsed": 2,
-  "soleDifference": "project.json.binding.persistenceContract",
-  "criteriaSeparated": true,
-  "agentRuns": 0
-}

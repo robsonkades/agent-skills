@@ -1,9 +1,0 @@
-package work;
-public final class Smoke {
- public static void main(String[] args) {
-  SettingsRegistry registry = new SettingsRegistry();
-  Settings first = registry.settings();
-  if (first != registry.settings() || first.limit()!=64 || registry.buildsForCheck()!=1) throw new AssertionError();
-  System.out.println("sequential identity/value/build check PASS; no concurrency proof");
- }
-}

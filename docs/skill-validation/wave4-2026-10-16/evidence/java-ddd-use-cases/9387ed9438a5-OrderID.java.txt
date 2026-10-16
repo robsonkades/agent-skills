@@ -1,5 +1,0 @@
-package com.example.domain.order;
-public record OrderID(String value) {
-    public static OrderID from(String value) { return new OrderID(java.util.Objects.requireNonNull(value)); }
-    public String getValue() { return value; }
-}

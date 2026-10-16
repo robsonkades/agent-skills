@@ -1,5 +1,0 @@
-policy=discard phase=saturation normalReturns=3 received=[first, second, third] completed=[first, second] recovered=[] unresolved=[third] permits=2 executorTerminated=true threads=[first@pool-1-thread-1, second@pool-1-thread-1]
-Exception in thread "main" java.lang.AssertionError: every received item must complete or recover exactly once; unresolved=[third] duplicateSettlement=[]
-	at QueueDeliveryControl.run(QueueDeliveryControl.java:132)
-	at QueueDeliveryControl.main(QueueDeliveryControl.java:138)
-exit=1 expected=1

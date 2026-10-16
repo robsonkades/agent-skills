@@ -1,7 +1,0 @@
-package work;
-import org.springframework.jdbc.core.JdbcTemplate;
-public class ReceiptWriter {
- private final JdbcTemplate jdbc; private final ReceiptObserver observer;
- public ReceiptWriter(JdbcTemplate jdbc,ReceiptObserver observer){this.jdbc=jdbc;this.observer=observer;}
- public void record(BookingRecorded event){observer.beforeWrite(event.id());jdbc.update("insert into receipt(id,body) values (?,?)",event.id(),event.receiptText());}
-}

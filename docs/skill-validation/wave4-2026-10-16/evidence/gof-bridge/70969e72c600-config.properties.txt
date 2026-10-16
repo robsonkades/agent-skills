@@ -1,2 +1,0 @@
-publisher.root=reports
-importer.root=reports

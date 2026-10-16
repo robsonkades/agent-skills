@@ -1,3 +1,0 @@
-# Proposal
-Keep upstream connection deferred until client bytes arrive. The listener accepted a TCP connection, so protocol compatibility is established. If a request stalls, raising the inspection timeout to ten seconds will repair the handshake. Proceed without another protocol check.
-

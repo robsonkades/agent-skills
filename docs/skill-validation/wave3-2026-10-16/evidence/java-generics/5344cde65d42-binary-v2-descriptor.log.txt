@@ -1,8 +1,0 @@
-Compiled from "Api.java"
-public final class Api {
-  public Api();
-    descriptor: ()V
-
-  public static <T extends java.io.Serializable & java.lang.Comparable<T>> T identity(T);
-    descriptor: (Ljava/io/Serializable;)Ljava/io/Serializable;
-}

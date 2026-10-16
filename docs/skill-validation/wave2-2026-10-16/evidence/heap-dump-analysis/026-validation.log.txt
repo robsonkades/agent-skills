@@ -1,8 +1,0 @@
-capture exited successfully.
-complete-histogram exited successfully.
-complete-unreachable exited successfully.
-discard-histogram exited successfully.
-discard-unreachable exited successfully.
-discard-keep-histogram exited successfully.
-discard-keep-unreachable exited successfully.
-Completed three parses and six query reports. Inspect CSVs before asserting behavior.

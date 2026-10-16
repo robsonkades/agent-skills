@@ -1,2 +1,0 @@
-/Pause/ { for (i = 1; i <= NF; i++)
-                 if ($i == "Pause") { print $i, $(i+1); break } }

@@ -1,1 +1,0 @@
-expected=partner:base:invoice actual=partner:base:invoice

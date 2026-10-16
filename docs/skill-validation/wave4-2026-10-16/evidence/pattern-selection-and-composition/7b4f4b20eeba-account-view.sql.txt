@@ -1,3 +1,0 @@
-SELECT account_id, revision, balance_cents
-FROM account_latest
-WHERE account_id = ?

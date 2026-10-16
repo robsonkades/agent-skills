@@ -1,2 +1,0 @@
-[0.027s][info][class,load] com.example.app.ReportApp source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05/input/published/report-app-1.0.0.jar
-[0.028s][info][class,load] com.example.text.LineEndings source: file:/C:/Users/robso/AppData/Local/Temp/skills-wave4-actors-HoLlUY/run-05/input/published/text-core-1.0.1.jar

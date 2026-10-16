@@ -1,9 +1,0 @@
-import java.time.zone.ZoneRulesProvider;
-public class TemporalEnvironment {
-    public static void main(String[] args) {
-        System.out.println("runtime=" + Runtime.version());
-        System.out.println("vendor=" + System.getProperty("java.vendor"));
-        System.out.println("arch=" + System.getProperty("os.arch"));
-        System.out.println("Europe/Paris rules=" + ZoneRulesProvider.getVersions("Europe/Paris").keySet());
-    }
-}

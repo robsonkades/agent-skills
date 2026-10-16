@@ -1,2 +1,0 @@
-Exception in thread "main" java.lang.AssertionError: Expected CR
-	at com.example.app.ReportApp.main(ReportApp.java:13)

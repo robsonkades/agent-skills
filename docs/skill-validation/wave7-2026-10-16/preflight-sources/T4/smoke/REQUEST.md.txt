@@ -1,1 +1,0 @@
-The normal smoke passes, but replay after acknowledgment followed by a local checkpoint failure produces a duplicate receiver effect. Repair the existing recovery path, demonstrate the failure window and a replay using the retained work, and state what your evidence establishes about restart recovery. Preserve receiver contract and publisher atomicity.

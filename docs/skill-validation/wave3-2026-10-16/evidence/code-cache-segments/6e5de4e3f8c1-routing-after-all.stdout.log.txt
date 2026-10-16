@@ -1,9 +1,0 @@
-40456:
-
-__ CodeHeapStateAnalytics lock wait took      0.000 seconds _________
-
-No aggregated data available for heap CodeHeap 'non-profiled nmethods'. Run function aggregate first.
-No aggregated data available for heap CodeHeap 'non-nmethods'. Run function aggregate first.
-
-__ CodeHeapStateAnalytics total duration      0.000 seconds _________
-

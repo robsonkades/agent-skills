@@ -1,5 +1,0 @@
-outcome=java.io.IOException
-sameAsWork=true
-suppressedCount=1
-causeSameAsWork=false
-closeCalls=1

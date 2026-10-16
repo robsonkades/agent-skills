@@ -1,4 +1,0 @@
-module m.target {
-    exports target;
-    opens target to m.client;
-}

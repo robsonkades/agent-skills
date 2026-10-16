@@ -1,3 +1,0 @@
-scope,decision_maker,consulted,informed,effective_from
-pricing/checkout,Bruno,Ada,Order team,2026-10-01
-pricing/batch,Bruno,Ada,Batch team,2026-10-01

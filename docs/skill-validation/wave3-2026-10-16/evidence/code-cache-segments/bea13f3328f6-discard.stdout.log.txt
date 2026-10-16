@@ -1,7 +1,0 @@
-39992:
-
-__ CodeHeapStateAnalytics lock wait took      0.000 seconds _________
-
-
-__ CodeHeapStateAnalytics total duration      0.000 seconds _________
-

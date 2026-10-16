@@ -1,7 +1,0 @@
-package work;
-import java.util.*;
-public final class Catalog {
-    private final List<Entry> rows = new ArrayList<>();
-    public void load(Entry... next) { rows.clear(); rows.addAll(Arrays.asList(next)); }
-    public Report open() { return new Report(rows); }
-}

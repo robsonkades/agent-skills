@@ -1,4 +1,0 @@
-09:39:44.504 [main] INFO com.tngtech.archunit.core.PluginLoader -- Detected Java version 25.0.3
-PASS: compiled java.sql.Connection signature rejected by existing APPLICATION rule.
-Architecture Violation [Priority: MEDIUM] - Rule 'classes that reside in a package 'example.clean.application..' should only depend on classes that reside in any package ['java.lang..', 'java.util..', 'example.clean.application..', 'example.clean.domain..']' was violated (1 times):
-Field <example.clean.application.SqlLeak.connection> has type <java.sql.Connection> in (SqlLeak.java:0)

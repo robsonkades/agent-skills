@@ -1,1 +1,0 @@
-package org.openrewrite.quark; public abstract class Quark implements org.openrewrite.SourceFile { }

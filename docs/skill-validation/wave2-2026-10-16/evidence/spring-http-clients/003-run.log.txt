@@ -1,7 +1,0 @@
-buffering=false status=200 size=65536 rejected=true sourceRead=1025 closed=true requests=1
-buffering=true status=200 size=65536 rejected=true sourceRead=65536 closed=true requests=1
-buffering=false status=500 size=65536 rejected=true sourceRead=1025 closed=true requests=1
-buffering=true status=500 size=65536 rejected=true sourceRead=65536 closed=true requests=1
-buffering=false status=200 size=8 rejected=false sourceRead=8 closed=true requests=1
-buffering=true status=200 size=8 rejected=false sourceRead=8 closed=true requests=1
-PASS: six actual RestClient cases; counted source is a transport double, not a socket.

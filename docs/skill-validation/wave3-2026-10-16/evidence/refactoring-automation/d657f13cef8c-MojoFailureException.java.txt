@@ -1,1 +1,0 @@
-package org.apache.maven.plugin; public class MojoFailureException extends Exception { public MojoFailureException(String s) { super(s); } }

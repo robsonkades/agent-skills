@@ -1,1 +1,0 @@
-Review the selected batch write configuration against CONTRACT.md. Trace the actual selected implementation, make the smallest supported correction if needed, and preserve behavior that is already adequate. Report what the supplied artifacts establish and which validation would still require the target runtime. Do not install tools or access a real database.

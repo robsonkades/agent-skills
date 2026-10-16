@@ -1,2 +1,0 @@
-package com.example.domain.order;
-public enum OrderStatus { DRAFT, SUBMITTED }

@@ -1,7 +1,0 @@
-# Rendering module
-
-Status: accepted.
-
-This is an internal application module. The source snapshot contains the complete consumer set; it has no serialized API, external implementations, reflective discovery or framework integration. We own the model and both operations and release them together. The Plain operation displays a label unchanged; Upper uses Locale.ROOT uppercasing. Producers supply non-null immutable labels. Upstream input validation is outside this review.
-
-The interface's unknown method is an internal extension seam. The accepted policy for introducing kinds is recorded in rendering-policy.md. It applies to both operations. Any design replacement must continue meeting that policy. The same expected-value functions in the main method are test helpers, not the current production dispatch path.

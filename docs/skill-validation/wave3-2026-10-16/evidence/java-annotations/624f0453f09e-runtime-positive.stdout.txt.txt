@@ -1,2 +1,0 @@
-RUNTIME_OK example.ExplicitUse value=example.LocalCodec alternatives=2
-RUNTIME_OK example.DefaultUse value=example.DefaultCodec alternatives=1

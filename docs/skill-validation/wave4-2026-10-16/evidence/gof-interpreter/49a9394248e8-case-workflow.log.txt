@@ -1,3 +1,0 @@
-entryPoint=workflow
-when status eq ACTIVE then accept => accept
-when status eq ACTIVE then accept suffix => ERROR: invalid workflow tail

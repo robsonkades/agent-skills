@@ -1,4 +1,0 @@
-import fs from 'node:fs';
-const root='C:/Users/robso/AppData/Local/Temp/skills-wave10-c71a8e23';
-const actors=JSON.parse(fs.readFileSync(root+'/actors.json','utf8'));
-console.log(JSON.stringify(actors.map(a=>({id:a.id,case:a.case,condition:a.condition,phase1:fs.existsSync(a.dir+'/output/answer1.md'),update:fs.existsSync(a.dir+'/input/UPDATE.md'),phase2:fs.existsSync(a.dir+'/output/answer2.md')}))));

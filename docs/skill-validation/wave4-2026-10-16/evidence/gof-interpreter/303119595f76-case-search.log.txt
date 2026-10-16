@@ -1,3 +1,0 @@
-entryPoint=search
-status eq ACTIVE => true
-status eq ACTIVE suffix => true

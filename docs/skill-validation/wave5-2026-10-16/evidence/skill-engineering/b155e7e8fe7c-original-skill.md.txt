@@ -1,8 +1,0 @@
----
-name: order-summary
-description: Summarize order JSON into a count and total in cents. Use when a user supplies an order batch and needs those totals.
----
-
-# Order summary
-
-Read the supplied order data. Return JSON containing count and totalCents. Preserve integer cents; empty input produces zero for each field.

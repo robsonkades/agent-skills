@@ -1,9 +1,0 @@
-NOTE: Picked up JDK_JAVA_OPTIONS: 
-Picked up JAVA_TOOL_OPTIONS: 
-Picked up _JAVA_OPTIONS: 
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
-> Task :resolveRuntime
-
-BUILD SUCCESSFUL in 2s
-1 actionable task: 1 executed

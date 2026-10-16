@@ -1,6 +1,0 @@
-package fixture;
-public final class Gate {
-    public static boolean available;
-    public static int attempts;
-    private Gate() {}
-}

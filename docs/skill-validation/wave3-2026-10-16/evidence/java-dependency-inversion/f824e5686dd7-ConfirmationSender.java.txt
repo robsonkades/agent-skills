@@ -1,5 +1,0 @@
-package shop.orders;
-
-public interface ConfirmationSender {
-    void send(Confirmation confirmation);
-}

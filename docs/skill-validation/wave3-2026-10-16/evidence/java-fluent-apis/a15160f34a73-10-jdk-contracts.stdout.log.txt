@@ -1,2 +1,0 @@
-PASS: immutable results, mutable identity, snapshots, copy isolation, repeated options and failed-chain state
-No HTTP request was sent.

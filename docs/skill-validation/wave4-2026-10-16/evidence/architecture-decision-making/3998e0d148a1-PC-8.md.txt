@@ -1,6 +1,0 @@
-# PC-8
-
-Owner: Order release lead
-Status: pending
-
-Compare checkout results with the database routine for the approved tax and rounding fixtures; exercise reversal to the database path before switching checkout. No execution result is attached yet.

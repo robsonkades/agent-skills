@@ -1,7 +1,0 @@
-package sample;
-
-import java.util.Objects;
-
-public record Product(String label, boolean audit) {
-    public Product { Objects.requireNonNull(label, "label"); }
-}

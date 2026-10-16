@@ -1,7 +1,0 @@
-expired=false timeoutCalls=1 executions=1 commits=1 rollbacks=0 outcome=returned
-expired=true timeoutCalls=0 executions=0 commits=0 rollbacks=1 outcome=TransactionTimedOutException
-Spring=6.2.12
-Java=25.0.3
-selection=remaining
-assertions=23
-LIMIT: JDBC recording doubles; no database enforcement or ORM test.

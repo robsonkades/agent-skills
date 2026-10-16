@@ -1,5 +1,0 @@
-# Catalog cache contract
-
-The cache contains disposable single-process read projections. A successful outer checkout transaction invalidates the affected catalog key. If that outer operation fails before committing, the prior cache entry must remain. Cache coherence across processes, crash-safe delivery and an atomic database/cache commit are outside this contract. Database visibility and transaction semantics need separate integration coverage; the sandbox transaction manager in this fixture proves none of those properties.
-
-The integration keeps the default successful-method eviction operation. This change does not introduce immediate cache operations or a second cache manager selected at a call site.

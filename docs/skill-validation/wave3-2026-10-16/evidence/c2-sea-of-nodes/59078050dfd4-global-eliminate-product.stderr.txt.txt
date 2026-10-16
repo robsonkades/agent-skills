@@ -1,4 +1,0 @@
-Error: VM option 'PrintEliminateAllocations' is develop and is available only in debug version of VM.
-Improperly specified VM option 'PrintEliminateAllocations'
-Error: Could not create the Java Virtual Machine.
-Error: A fatal exception has occurred. Program will exit.

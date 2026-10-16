@@ -1,3 +1,0 @@
-Command: node check.mjs
-Exit code: 0
-Existing point and join checks passed; moved=2075

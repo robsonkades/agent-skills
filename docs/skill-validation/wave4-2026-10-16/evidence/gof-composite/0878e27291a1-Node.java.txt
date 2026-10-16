@@ -1,9 +1,0 @@
-import java.util.List;
-
-public sealed interface Node permits Leaf, Branch {}
-record Leaf(String name, long bytes) implements Node {
-    Leaf { if (bytes < 0) throw new IllegalArgumentException("negative bytes"); }
-}
-record Branch(String name, List<Node> children) implements Node {
-    Branch { children = List.copyOf(children); }
-}

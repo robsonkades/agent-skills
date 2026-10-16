@@ -1,2 +1,0 @@
-Review this persistence slice against CONTRACT.md. Follow the issuance path and directory consumer, the mapping and the supplied deployed schema. Make the smallest justified correction if a contract is violated, or preserve an adequate design. State the checks performed and their limits. Do not upgrade the Java, API or provider baseline.
-

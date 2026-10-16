@@ -1,6 +1,0 @@
-Runtime: Eclipse Temurin 25.0.3+9, Windows amd64.
-Purpose: support staff request the existing configuration for exactly one file output.
-Authorization for this helper is inspection only: it must preserve selection, decorators, outputs and rotation state.
-Caller supplies Jcmd as the matching jcmd.exe, TargetPid as one identified JVM PID, and OutputName as file=a.log.
-The supplied before-list.txt is an actual isolated VM.log list capture. Both file outputs are owned by independent consumers; their warning coverage and retention must be preserved.
-This is a repository review fixture. No production PID or endpoint is supplied. Do not attach to arbitrary existing JVMs. An isolated owned test JVM is permitted if needed, but sufficient matching source and supplied captures can support the narrow conclusion.

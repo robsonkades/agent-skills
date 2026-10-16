@@ -1,6 +1,0 @@
-Existing point and join checks passed; moved=2075
-accepted.properties key=user:2 primary=n2 replicas=[n2, n3, n4]
-candidate.properties key=user:2 primary=n1 replicas=[n1, n3, n2]
-Exception in thread "main" java.lang.AssertionError: candidate.properties is incompatible with accepted-vectors.json: expected primary=n2 replicas=[n2, n3, n4]; actual primary=n1 replicas=[n1, n3, n2]
-	at CurrentChecks.checkPlacement(CurrentChecks.java:15)
-	at CurrentChecks.main(CurrentChecks.java:32)

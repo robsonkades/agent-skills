@@ -1,2 +1,0 @@
- M skills/tcp-tuning/references/sysctl-and-socket-options.md
- M skills/tcp-tuning/skill.yaml

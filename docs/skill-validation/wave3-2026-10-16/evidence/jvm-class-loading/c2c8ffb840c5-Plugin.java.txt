@@ -1,9 +1,0 @@
-package fixture;
-public final class Plugin {
-    public static final String STATE = connect();
-    private static String connect() {
-        Gate.attempts++;
-        if (!Gate.available) throw new IllegalStateException("dependency unavailable");
-        return "ready";
-    }
-}

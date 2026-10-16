@@ -1,7 +1,0 @@
-package shop.orders;
-import java.util.List;
-import java.util.ArrayList;
-final class RecordingSender implements ConfirmationSender {
-    final List<Confirmation> sent = new ArrayList<>();
-    @Override public void send(Confirmation c) { sent.add(c); }
-}

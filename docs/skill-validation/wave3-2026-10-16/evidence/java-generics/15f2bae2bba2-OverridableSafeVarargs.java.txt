@@ -1,3 +1,0 @@
-class OverridableSafeVarargs {
-    @SafeVarargs public <T> void accept(T... values) {}
-}

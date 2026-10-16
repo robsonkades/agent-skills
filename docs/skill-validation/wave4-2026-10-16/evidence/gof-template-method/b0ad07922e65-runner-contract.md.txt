@@ -1,5 +1,0 @@
-# Runner extension contract
-
-Runner.run invokes loaded and then publish; a successful publication reports the input of that invocation. currentInput supplies the invocation input to existing hooks and is only valid during an active run. Existing protected signatures and their order are supported plugin API. Calls from other threads are serialized.
-
-A hook may not start another run on the same instance before the outer hook returns. Such a nested call must throw IllegalStateException before changing invocation state or invoking nested hooks. Any failed call must leave the instance usable for a later permitted call.
