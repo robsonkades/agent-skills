@@ -1,162 +1,172 @@
 ---
 name: java-ddd-domain-services
 description: >-
-  Place Java DDD behavior in an aggregate, value object, domain service, policy,
-  specification or factory using business ownership and consistency requirements.
-  Use when a service takes over entity behavior, a rule combines several domain
-  concepts, a policy needs external facts, or creation and rehydration are confused.
-  Covers business names and packages, pure decision contracts and rule validation;
-  excludes application orchestration, database query construction and persistence
-  implementations.
+  Implement Java DDD behavior placement, named factories and validation following
+  the ddd-example domain reference. Use when deciding where a domain rule belongs,
+  implementing Validator and ValidationHandler, collecting Notification errors,
+  or preserving validation timing during creation, restoration and update.
+  Covers aggregate and value-object behavior without inventing domain services,
+  policies or specifications; excludes application orchestration and infrastructure.
 ---
 
 # Java DDD Domain Services
 
-## Scope and ownership
+## Authority and scope
 
-Keep behavior with the concept that owns its meaning and state. Introduce a domain
-service only when a significant business operation has no natural entity or value
-object owner. A domain service is a modeling role, not a Spring stereotype, remote
-service or required class for every aggregate.
+Follow the implementation in `ddd-example/domain` as this skill's sole technical
+reference. The packaged guidance and Java assets record that contract at revision
+`8d964ce4106c2299164e28980ae7553e2afbdc92`; the original checkout was
+`C:\git\ddd-example\domain`. Its location is provenance, not a required install
+path. Preserve the target project's base package while retaining the reference's
+type relationships, method contracts and placement of behavior.
 
-This skill assumes a domain model is useful for the selected behavior. When that
-choice is unresolved, `domain-logic-organization` can compare it with scripts and
-table-oriented logic. For aggregate consistency use `java-ddd-aggregates`; for
-orchestration use `java-ddd-use-cases`. The essential ownership rules below apply
-without installing those optional skills.
+This reference has no dedicated domain-service, policy, specification or factory
+class. Its domain behavior lives in aggregates, value objects, named static
+factories and aggregate-specific validators. Do not create a service layer merely
+because this skill is named domain services. This is the selected implementation
+standard, not a universal prohibition on domain services in DDD. If a requested
+operation has no evidenced counterpart, ask for its business contract and an
+approved reference before introducing a new pattern. Do not fill the gap with
+external DDD theory.
 
-## Discover the local contract
+Keep this work inside the domain layer and its unit tests. Loading, saving,
+transactions, remote calls and persistence mappings are separate work; the
+domain-owned gateway signatures belong to `java-ddd-repositories`.
 
-Before changing ownership, inspect a representative aggregate, value object,
-validator, gateway, use case and associated tests. Read project instructions,
-Maven/Gradle toolchains, module dependencies and resolved annotation/framework
-versions. Preserve the target baseline; adopting this skill does not authorize
-dependency or Java upgrades. The illustrative signatures use Java 17-compatible
-types and require the domain types defined by the target project.
+## Establish the specific contract
 
-Trace one accepted and one rejected business scenario. Record the actual rule,
-its authoritative data, who can change that data, when the rule must hold, and the
-observed package/class conventions. A class named `Service` or `Validator` alone
-does not establish responsibility. Missing policy thresholds, currency rules or
-consistency guarantees remain explicit unknowns; implement independent work and
-resolve those contracts before encoding a guess.
+Inspect the affected aggregate or value object, its factories, validator,
+validation handlers, exceptions and domain tests. Trace one accepted and one
+rejected input through the actual entry point. Record the owner, rule, error
+message, validation order and point at which failure becomes visible. A class
+name alone does not establish its behavior.
 
-## Choose the owner
+Read the target project's Java release/toolchain and test dependencies. The
+reference has Gradle 7.6, JUnit Jupiter 5.9.2 and Java 17 settings in `buildSrc`;
+`domain/build.gradle` does not declare its own Java toolchain. Do not infer the
+target module's release from that alone or upgrade dependencies to use the skill.
+The examples require the reference domain types and the project's existing
+JUnit setup; they introduce no new annotation library.
 
-| Evidence from the operation                                                 | Place the behavior                                          | Example                                                                         |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| A transition protects state within one aggregate                            | Aggregate root, delegating internal behavior as appropriate | `Order.submit()` controls allowed status and required lines                     |
-| A rule belongs to a constituent entity                                      | Entity, reached through the aggregate's controlled boundary | `OrderLine.changeQuantity(...)` with root coordination for order totals         |
-| A calculation defines a value's own meaning                                 | Immutable value object                                      | `Money.add(...)` checks currency; `DateRange.contains(...)` checks its interval |
-| A named business calculation spans concepts with no natural owner           | Domain service or policy                                    | `FreightPricing.quote(...)` combines destination, shipment and tariff           |
-| Alternative business algorithms have the same meaningful contract           | Policy, with an interface when actual variation needs it    | `CancellationPolicy.assess(...)` for different contract terms                   |
-| A named criterion is independently reused or composed                       | Domain specification                                        | `EligibleForRenewal.isSatisfiedBy(...)` over complete domain facts              |
-| Complex creation hides assembly and enforces a valid initial aggregate      | Factory or named creation method                            | `SubscriptionFactory.start(...)`; simple creation can stay `Order.create(...)`  |
-| The work loads, invokes, saves, manages a transaction or dispatches effects | Application use case with infrastructure adapters           | `DefaultSubmitOrderUseCase.execute(...)`                                        |
+When creating a new aggregate, establish which demonstrated validation lifecycle
+it follows. The source contains two distinct choices; if the request and target
+code do not identify one, ask instead of selecting a universal default. Likewise,
+source-specific lengths and messages do not establish rules for an unrelated
+business concept.
 
-A calculation accepting two objects is not automatically a domain service: a
-value object can combine with another value, and an aggregate can use supplied
-facts without surrendering its transition. Reuse alone does not justify moving
-state-dependent behavior out of its owner. Conversely, forcing route planning
-onto one stop merely to avoid a service distorts ownership.
+## Keep behavior with the evidenced owner
 
-## Packages, contracts and boundaries
+| Responsibility                             | Reference implementation                                                             | Preserve                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Change aggregate state                     | `Category.activate/deactivate/update`, `Genre.addCategory`, `Video.updateVideoMedia` | Behavior stays on the root; fluent mutation methods return `this`                                         |
+| Produce another value                      | `AudioVideoMedia.processing/completed`                                               | Return a new value object; do not move these operations into a media service                              |
+| Create a new root                          | `newCategory`, `newGenre`, `newMember`, `newVideo`                                   | Static factory on the owning type; identity and initial lifecycle are established there                   |
+| Restore or copy a root                     | Its actual `with(...)` overload                                                      | Preserve supplied identity and lifecycle; trace validation and copying in that overload                   |
+| Check aggregate fields                     | `CategoryValidator`, `GenreValidator`, `CastMemberValidator`, `VideoValidator`       | A dedicated validator beside the aggregate, using the shared handler protocol                             |
+| Reject missing required constructor values | Existing `Objects.requireNonNull` calls on IDs/media and selected base fields        | Keep their `NullPointerException` behavior; do not silently translate every rejection into a notification |
 
-- Follow the architectural family's `domain.<context>` convention, such as
-  `com.example.domain.order.FreightPricing`. Introduce a cohesive `pricing`
-  subpackage when the concept warrants it. Avoid a project-wide `services` bucket
-  and a generic `OrderService` as the default home for rules.
-- Keep use cases in `application.<context>.<operation>` and implementations such
-  as `DefaultSubmitOrderUseCase` there. Infrastructure implements gateways and
-  external integrations. Exact base packages and existing suffix conventions
-  come from the inspected project, not from this example.
-- Use domain input/output types and intention-revealing operations. Prefer
-  immutable returned values or decisions with business reasons over changing
-  several aggregates through setters. An aggregate must still enforce its own
-  transition when a policy supplies a decision.
-- Keep policies stateless with respect to individual executions: no last
-  customer, accumulated validation errors or mutable decision cache. Immutable
-  policy parameters and explicit versioned terms are legitimate state. This is
-  the family's design default, not a claim that every DDD service is pure by
-  definition.
-- Prefer explicit facts as inputs to a pure decision. A required domain
-  capability may have a domain-owned gateway contract, but the interface does
-  not make its implementation pure. Make I/O visible in application orchestration
-  and keep retries, HTTP clients, transactions, JPA types and brokers outside the
-  domain. Never hide a lookup inside `isSatisfiedBy`.
-- Follow local `final` conventions for parameters, immutable fields and classes
-  without designed inheritance. Keep nullability explicit using the project's
-  existing mechanism; preserve JSpecify annotations where configured. Do not
-  introduce an annotation dependency merely to copy an example.
+Use the reference's `domain.category`, `domain.castmember`, `domain.genre` and
+`domain.video` organization as the pattern: root, ID, validator and gateway live
+together. Shared validation types live in `domain.validation`; handlers live in
+`domain.validation.handler`. Do not add a project-wide `services` bucket,
+Spring `@Service`, Jakarta Bean Validation constraints, Lombok-generated setters
+or ORM specifications to replace these mechanisms.
 
-## Execute a focused change
+## Preserve validation timing
 
-1. **Write the rule contract.** Name inputs, outputs, rejection reasons, state
-   owner and required consistency point. Separate business rejection from
-   unavailable or insufficient evidence.
-2. **Choose the smallest adequate owner.** Keep an existing correct placement.
-   Move an order-status guard into `Order`, extract independently varying pricing
-   only when its domain meaning justifies a policy, and leave loading/saving in
-   the use case. Avoid a new interface with no substitution or boundary need.
-3. **Preserve the protected transition.** A separate validator or policy may
-   explain a decision, but public creation and mutation paths must not bypass
-   applicable invariants. Snapshot approval does not reserve stock or credit.
-   A deferred or cached decision must still apply to the inputs and terms used
-   at the transition; a bare `approved` flag cannot establish that contract.
-4. **Read conditional detail before implementing it.** Use
-   [Policy and factory contracts](references/policy-and-factory-contracts.md)
-   when rules consume external facts, span aggregates, become specifications,
-   or construct/reconstitute objects. It covers timestamp/currency guarantees,
-   concurrent prechecks, predicate translation and lifecycle differences.
-5. **Implement and verify the changed boundary.** Update callers and tests with
-   the project's current build. Keep data loading, transaction policy and
-   persistence implementations with their existing owners.
+| Aggregate    | Named creation and `with(...)`                                                                              | `update(...)`                                                                     | Validation entry point                                                                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `Category`   | Constructor assigns fields and checks identity/timestamps; it does not invoke `CategoryValidator`           | Mutates and returns without field validation                                      | Caller invokes `validate(handler)`                                                        |
+| `Video`      | Constructor assigns fields and delegates identity handling to its base; it does not invoke `VideoValidator` | Mutates and returns without field validation                                      | Caller invokes `validate(handler)`                                                        |
+| `Genre`      | Constructor assigns fields, then invokes `selfValidate()`                                                   | Changes activation, name, categories and timestamp, then invokes `selfValidate()` | Fresh `Notification`, delegated validator, then `NotificationException` when errors exist |
+| `CastMember` | Constructor assigns fields, then invokes `selfValidate()`                                                   | Assigns name, type and timestamp, then invokes `selfValidate()`                   | Fresh `Notification`, delegated validator, then `NotificationException` when errors exist |
 
-## Quality and validation
+`with(...)` does not universally bypass validation: `Genre` and `CastMember`
+still run their constructors' checks. Conversely, adding constructor validation
+to `Category` or `Video` changes the reference's contract. `Genre.activate`,
+`deactivate` and category collection operations do not call `selfValidate()`.
+Trace each method rather than assuming that all public mutations validate.
 
-For a changed policy, exercise the rule boundaries and rejection reasons using
-domain objects without starting Spring or a database. Include any applicable
-currency mismatch, missing facts, freshness boundary, future timestamp and
-policy-version cases. For deferred decisions, test a relevant input changing
-before use and an unchanged input remaining valid under the agreed terms.
-Repeated calls must not inherit another request's state.
-Test the aggregate's transition independently so bypassing the orchestration
-cannot skip local invariants.
+An exception from `Genre.update` or `CastMember.update` does not restore the old
+in-memory state: assignments happen first. Do not promise atomic rejection or
+silently reorder those operations. If preserving state on failure is required,
+identify that as a requested contract change and resolve it with the user.
 
-When the decision affects shared capacity, uniqueness or another concurrently
-changing fact, unit tests prove only the calculation. Require the relevant
-application/persistence contract check for conditional writes, reservation
-timeouts and recovery, or conflict handling. For translated specifications,
-compare database outcomes with the domain criterion on representative boundary
-data; a predicate test alone does not verify SQL semantics.
+## Implement the validator protocol
 
-Return the chosen owner and its reason, affected package/class names, implemented
-behavior and executed checks. For a review, distinguish findings from fixes and
-allow a supported no-change conclusion. Report remaining unknown policy or
-consistency requirements and unexecuted checks; do not claim business correctness
-from naming or compilation alone. `java-ddd-testing` can deepen the test strategy.
+Before implementing a validator, handler or lifecycle change, read
+[Validation and factory contracts](references/validation-and-factories.md). It
+contains the actual interfaces, handler differences, rule order, error messages,
+source locations and examples.
 
-## Optional neighboring expertise
+Keep these constraints visible during implementation:
 
-Use `java-ddd-value-objects` for value semantics, `java-ddd-repositories` for
-gateway/persistence contracts, and `java-ddd-domain-events` for event lifecycle.
-For algorithm variation mechanics use `gof-strategy`; for database query objects
-and generated SQL use `query-objects-and-specifications`. These handoffs extend
-the guidance rather than replacing the contracts above.
+- `validate(handler)` constructs the aggregate's validator and calls its
+  parameterless `validate()`. Validators inspect state; they do not mutate,
+  normalize, load gateways or save anything.
+- Append the domain `Error(String message)` through `ValidationHandler`. Preserve
+  the original error text and ordering. Return from an individual field check
+  after a null or blank failure; with `Notification`, subsequent independent
+  field checks still run.
+- Choose the actual handler contract: `Notification` accumulates; an append to
+  `ThrowsValidationHandler` throws immediately. Do not turn both into an
+  interchangeable exception-preserving wrapper.
+- Allocate a new `Notification` for each independent validation. It is mutable,
+  exposes its error list, and does not clear earlier errors when reused.
+- Preserve `isBlank()` followed by `trim().length()` where present. Validation
+  checks a trimmed length without storing a trimmed value. Do not invent checks
+  for fields that the reference leaves unchecked.
 
-## Basis and limits
+## Complete Java implementations
 
-Evans describes a domain service as a named operation when entity/value ownership
-would distort the model, and a factory as encapsulation for complex creation.
-Those are ownership criteria, not mandatory Java class templates.
-([DDD Reference, Services and Factories](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf))
+When implementing or comparing validation code, open the relevant complete source
+files below. They retain the original packages, visibility, error messages, field
+order and exception handling; use them alongside the contract reference above.
 
-Fowler combines behavior and data in a domain model and warns against pushing all
-business behavior into procedural services. A thin application layer can coexist
-with a rich model.
-([Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html),
-[Anemic Domain Model](https://martinfowler.com/bliki/AnemicDomainModel.html))
+- For the shared protocol: [Error.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/validation/Error.java),
+  [ValidationHandler.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/validation/ValidationHandler.java)
+  and [Validator.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/validation/Validator.java).
+- For accumulated errors and callback failures:
+  [Notification.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/validation/handler/Notification.java).
+- For immediate rejection and its different callback catch contract:
+  [ThrowsValidationHandler.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/validation/handler/ThrowsValidationHandler.java).
+- For the aggregate being changed:
+  [CategoryValidator.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/category/CategoryValidator.java),
+  [CastMemberValidator.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/castmember/CastMemberValidator.java),
+  [GenreValidator.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/genre/GenreValidator.java)
+  or [VideoValidator.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/VideoValidator.java).
 
-The package conventions, pure-policy default and validation procedure here are
-this skill's Java/Clean Architecture application of those principles. They do
-not establish the correct business policy for an unfamiliar bounded context.
+These are complete production source files, not a standalone module. The handlers
+require `DomainException`; concrete validators require their aggregate types.
+When assembling the source for compilation, use `java-ddd` for the complete base
+types, exceptions and utilities, and `java-ddd-aggregates` for the roots and their
+companion type routing.
+
+## Verify domain behavior
+
+Use real aggregates, value objects and handlers in simple unit tests. No mocks,
+Mockito, Spring context, database or network. Every unit test added or changed
+must have a meaningful `@DisplayName`, including tests copied from the reference.
+The original tests lack that annotation; it is an explicit requirement of this
+skill family, not a claim about the original files.
+
+Exercise the boundary affected by the change: accepted input, null/blank/length
+rejection, exact errors, accumulation versus first failure, or creation versus
+explicit validation. Test restoration separately when it is affected. Assert
+observable state and errors, not calls to private helpers. Do not create getter
+tests merely to raise coverage. For the complete testing conventions use
+`java-ddd-testing`; a focused executable example is in the routed reference.
+
+Return the chosen owner, preserved lifecycle and changed files with executed
+checks. For a review, distinguish findings from implemented fixes and allow a
+supported no-change result. Report unresolved requirements and tests not run;
+compilation does not prove business correctness or persistence atomicity.
+
+## Related domain skills
+
+Use `java-ddd` for base types, utilities and exception hierarchy;
+`java-ddd-aggregates` for aggregate boundaries and copy/mutation contracts;
+`java-ddd-value-objects` for value and identifier implementation;
+`java-ddd-domain-events` for event registration and publication. These skills
+compose around the same reference. Requests to implement application use cases
+or infrastructure remain outside this domain-only scope.

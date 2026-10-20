@@ -1,14 +1,13 @@
 schemaVersion: 1
 
 name: java-ddd-repositories
-version: 1.0.1
+version: 1.2.0
 description: >-
-  Implement or review Java DDD aggregate persistence when a Gateway loses identity,
-  audit or child state, concurrent updates bypass an aggregate invariant, database
-  errors become not-found results, or an in-memory fake hides missing saves. Preserve
-  inward dependencies and the project's Gateway, JpaEntity and Repository naming.
-  Owns reconstitution and aggregate persistence contracts; excludes aggregate
-  boundary discovery, generic Repository selection and detailed ORM configuration.
+  Implement or review domain Gateway interfaces using the ddd-example domain
+  reference. Use when defining aggregate lookups and writes, typed-ID existence
+  queries, pagination, video previews or media resource ports. Preserves the exact
+  domain contracts and package placement; excludes application orchestration,
+  persistence adapters, ORM mappings and transaction implementation.
 
 license: Apache-2.0
 
@@ -29,23 +28,24 @@ keywords:
   - gateway
   - repository
   - reconstitution
-  - optimistic-locking
+  - pagination
+  - domain-port
 
 files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 
 dependencies: []
 
 suggests:
+  - java-ddd
   - java-ddd-aggregates
+  - java-ddd-value-objects
   - java-ddd-domain-events
+  - java-ddd-domain-services
   - java-ddd-testing
-  - java-ddd-use-cases
-  - repository-pattern
-  - spring-boot-jpa
-  - spring-transactions-and-events
 
 capabilities:
   - reads-source
@@ -54,5 +54,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Repositories
-      short_description: Aggregate gateways, reconstitution and concurrency contracts
-      default_prompt: Use Java DDD Repositories to implement or review this aggregate persistence boundary.
+      short_description: Reference domain gateways, queries and media contracts
+      default_prompt: Use Java DDD Repositories to implement or review this domain Gateway contract from the ddd-example reference.

@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: customer
+  mvc:
+    problemdetails:
+      enabled: true
+
+springdoc:
+  # O catálogo de erros é aplicado pelo GlobalErrorOpenApiCustomizer.
+  override-with-generic-response: false

@@ -1,141 +1,126 @@
 ---
 name: java-ddd-domain-events
 description: >-
-  Model Java DDD domain events when an aggregate transition needs an explicit business
-  fact, handlers see mutable state, rehydration emits duplicate facts, or saving loses
-  pending events. Define immutable payloads, occurrence identity, time, collection
-  lifetime and the integration boundary in domain/application/infrastructure packages.
-  Excludes broker operations, event sourcing and Spring listener configuration.
+  Implement and review Java DDD domain events using the ddd-example domain pattern.
+  Use when adding an aggregate event, preserving pending events during copying,
+  checking media event triggers, or testing publication failure and queue cleanup.
+  Covers DomainEvent, DomainEventPublisher, Entity and VideoMediaCreated with simple
+  domain tests without mocks. Excludes application, infrastructure and delivery design.
 ---
 
 # Java DDD Domain Events
 
-Make a meaningful business occurrence explicit without giving the aggregate responsibility
-for delivery. A domain event may remain inside one process. Neither a broker nor an event
-store follows from introducing `OrderSubmitted`.
+Follow the domain implementation in `C:\git\ddd-example\domain` as the sole technical
+reference for this pattern. The inspected revision is
+`8d964ce4106c2299164e28980ae7553e2afbdc92`; the source map and extracted contracts are in
+[event lifecycle](references/event-lifecycle.md). This is an implementation standard for
+the referenced domain, not a claim that every DDD project uses this design.
 
-## Establish the business fact and the existing path
+For implementation, read that reference and the complete Java files linked below.
+Inspect the target's existing classes, build and tests before editing. Preserve its Java
+and dependency versions. The examples use Java 17-compatible syntax; the reference has
+records, but its domain build does not explicitly pin a Java release. Do not upgrade the
+project or add a library to apply this skill.
 
-Identify the bounded context, transition, business observer and acceptance example. Confirm
-whether the consumer needs the fact that submission happened, the current order state, or
-an instruction to submit an order. Use a direct collaborator for mandatory orchestration
-when indirect event dispatch would only obscure the dependency. Past tense helps naming,
-but authority and rejection semantics distinguish a fact from a command.
+If source evidence or the requested business trigger is missing, identify the exact gap
+and ask a focused question before implementing that behavior. The packaged source and
+extracted contracts remain usable when the original Windows path is unavailable; they
+do not establish unrecorded business rules. Do not fill gaps with a generic DDD event
+architecture.
 
-Inspect the aggregate, event base type, application use case, gateway, persistence mapper,
-listeners and transaction tests. Trace registration through save, transaction completion,
-delivery and list cleanup; find where each step actually runs. Record Java/framework
-versions and preserve them. Read the target's package rules and any project overlay before
-generating code; a sample project is evidence of a convention, not evidence of reliability.
-An unavailable commit or delivery path remains an explicit unknown.
+## Complete Java implementations
 
-Follow the existing foundation where adopted:
+When implementing or comparing the shared event contracts, open
+[DomainEvent.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/events/DomainEvent.java)
+and [DomainEventPublisher.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/events/DomainEventPublisher.java).
+For the media payload and both constructors, open
+[VideoMediaCreated.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/VideoMediaCreated.java).
+These are complete files copied from the inspected revision, with their original packages
+and contracts; the snippets in the lifecycle reference explain selected behavior.
 
-| Responsibility                  | Example location and role                                                               |
-| ------------------------------- | --------------------------------------------------------------------------------------- |
-| Business state transition       | `domain.order.Order.submit(...)` checks invariants and registers a fact                 |
-| Local event type                | `domain.order.event.OrderSubmitted` describes the occurrence                            |
-| Shared event contract           | Existing `domain.events.DomainEvent`, if the project has one                            |
-| Application coordination        | `application.order.submit.DefaultSubmitOrderUseCase` invokes the transition and gateway |
-| Persistence/publication adapter | `infrastructure.order` maps state and selected facts to storage or an external contract |
+When implementing the pending-event queue or its constructors, use the complete
+[Entity.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Entity.java)
+and [AggregateRoot.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/AggregateRoot.java)
+in `java-ddd`. The event's timestamp helper is
+[InstantUtils.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/utils/InstantUtils.java).
+For producer triggers and copy/factory behavior, open
+[Video.java](../java-ddd-aggregates/assets/reference/video/Video.java) in `java-ddd-aggregates`.
+These companion skills are suggestions, so their files may be absent in a standalone
+installation. Use the corresponding suggested skill or the original source revision
+when those implementations are needed; do not reconstruct complete base classes from
+the partial snippets. The three event files alone are not a standalone domain build.
 
-Retain an existing `domain.video.VideoMediaCreated` placement or `occurredOn()` accessor
-when that is the established contract. The `event` subpackage and `occurredAt` spelling
-above are examples, not a reason for a package-wide migration. Keep Spring, broker and
-serialization APIs outside the domain; a shared `DomainEvent` interface is optional.
+## Keep the domain contract exact
 
-## Choose the depth that changes the result
+| Responsibility | Reference contract                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| Shared event   | `domain.events.DomainEvent extends Serializable`, exposing `Instant occurredOn()`                           |
+| Publisher port | `domain.events.DomainEventPublisher`, a functional interface with `void publishEvent(DomainEvent event)`    |
+| Pending events | `Entity<ID extends Identifier>` owns the list; `AggregateRoot` forwards the constructors                    |
+| Concrete event | `domain.video.VideoMediaCreated(String resourceId, String filePath, Instant occurredOn)`                    |
+| Producer       | `Video.updateVideoMedia(...)` and `updateTrailerMedia(...)` register the event for non-null `PENDING` media |
 
-- **Adding or reviewing a fact:** establish business meaning, transition, immutable data,
-  identity and time. Inspect one producer and its actual consumers; do not build delivery
-  infrastructure for an unconsumed local fact.
-- **Implementing event collection or persistence:** read
-  [event lifecycle](references/event-lifecycle.md) for registration, snapshots, multiple
-  saves and transaction ownership. Select the complete path, including rollback cleanup.
-- **Crossing a process or bounded-context boundary:** use that reference's integration
-  section to define the mapping and required guarantee, then hand off transport mechanics.
-  An externally serialized domain class is already a contract even if called internal.
-- **Proving a repair or new path:** read [verification](references/verification.md) and
-  select cases that exercise the changed guarantee. Pure domain tests need no framework.
+Keep the concrete event beside its aggregate, as `VideoMediaCreated` is beside `Video`.
+Preserve the shared interfaces and method names. The two-argument event constructor uses
+`InstantUtils.now()`, which truncates to microseconds. There is no event ID, schema
+version, media-type field, injected `Clock` or explicit canonical-constructor validation
+in this event. Do not silently add any of them. `resourceId` contains the video's ID
+value; it is not the media's ID or a unique occurrence identity.
 
-## Consequential decisions
+The producer captures strings and an `Instant`, not a mutable aggregate reference. Keep
+that value-payload pattern when modeling an authorized new event, with its fields and
+trigger justified by the requested business behavior. Do not impose an event on every
+aggregate mutation: image updates and ordinary `Video.update(...)` do not register one.
 
-1. **Register only after a successful transition.** Validate inputs and business invariants
-   before changing state. Capture the event from the accepted transition and append it via
-   the existing `registerEvent`; a rejected transition adds nothing. Registration records
-   an in-memory fact, not a database commit. Construction, rehydration and replay have
-   different responsibilities: loading old state must not announce a new occurrence.
-2. **Freeze the fact.** Store immutable IDs/value snapshots needed by the semantic contract,
-   not an aggregate, JPA proxy or mutable collection reference. A Java record is only
-   shallowly immutable. Decide explicitly whether a consumer should use occurrence data
-   or reload current state; a reload cannot reconstruct the old fact after later mutations.
-3. **Give time and identity explicit meanings.** `occurredAt` describes when the business
-   occurrence happened; recording and publishing can happen later. Obtain time from an
-   injected `Clock` or supplied, validated occurrence data. Keep original identity/time
-   on redelivery or replay. An event ID, aggregate ID and command idempotency key serve
-   different purposes. Do not use wall-clock time as proof of total order.
-4. **Own the event list lifecycle.** Choose who snapshots, stages, acknowledges and clears
-   events, including repeated saves and partial handler failure. A successful `save()` or
-   callback is not necessarily transaction completion. On rollback, discard the mutated
-   unit of work or explicitly restore both state and pending-event bookkeeping; never
-   silently reuse an object whose state no longer matches storage. If completion is
-   uncertain, reconcile the command outcome before assuming rollback or creating new facts.
-5. **Match publication strength to the requirement.** Local, disposable follow-up can use
-   local dispatch with documented timing/failure behavior. Required external delivery
-   needs durable publication intent atomically committed with the business write, commonly
-   the existing outbox in the same database transaction. A send before commit can announce
-   rolled-back state; an after-commit callback alone has a crash gap. Consumer effects
-   that can repeat must be idempotent. Preserve an adequate existing durable mechanism.
-6. **Treat integration events as owned contracts.** Infrastructure translates selected
-   local facts into the external envelope; retain a stable occurrence identity and scope
-   ordering only where business behavior needs it. Map the recipient's vocabulary at the
-   boundary. Expose only authorized data, with retention and replay accounted for; dumping
-   the entire aggregate creates privacy and compatibility liabilities.
+## Preserve the observable lifecycle
 
-Evans distinguishes meaningful domain activity from software activity; Fowler explains
-immutable occurrence data and separate occurrence/recording time. These principles guide
-the model, while the lifecycle and package choices here are implementation decisions.
-See [Evans, DDD Reference, Domain Events](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf#page=20)
-and [Fowler, Domain Event](https://martinfowler.com/eaaDev/DomainEvent.html).
+- The `Entity` constructor copies the supplied list container. `getDomainEvents()` exposes
+  an unmodifiable **live view**, not a snapshot. Do not replace it with `List.copyOf` and
+  claim identical behavior.
+- `registerEvent(null)` and `publishDomainEvents(null)` do nothing. Registration appends;
+  it does not publish, deduplicate or validate the payload.
+- A non-null publisher receives events sequentially in list order. The list clears only
+  after all calls return normally. If a call throws, that exception escapes and the whole
+  queue remains, including the already-published prefix. Retrying can repeat that prefix.
+- `Video.newVideo(...)` and the full `Video.with(...)` reconstruction begin with an empty
+  queue. `Video.with(existingVideo)` preserves the existing events in an independent
+  list container. Do not conflate these overloads or recreate event timestamps on copying.
+- `Video` media updates assign the media and refresh `updatedAt` before registration;
+  they do not call `validate(handler)`. Preserve this external validation model.
+  Do not promise automatic rejection, state rollback or deduplication on repeat calls.
 
-## Execute and validate
+Read [event lifecycle](references/event-lifecycle.md) for exact implementation snippets,
+the status/trigger table, constructor null behavior and copying caveats. The source does
+not provide concurrent/reentrant queue mutation support, durable publication, transaction
+completion or exactly-once delivery. Do not add those guarantees to the domain contract.
 
-State the expected transition and delivery outcome using existing requirements before
-asking for missing policy. Ask only when an unresolved loss, ordering or consumer contract
-changes the implementation; continue independent domain work in the meantime. Retaining
-the present direct call or local mechanism is a valid result.
+## Verify the changed behavior
 
-Implement the smallest complete path using the established class names, commands, outputs,
-gateway ports and infrastructure mapping. Do not add a generic event bus, inheritance tree,
-outbox or domain-event superclass merely to match an example. Keep business invariants
-with the aggregate even if application handlers coordinate reactions.
+Read [verification](references/verification.md) when adding or changing events or their
+tests. Use real aggregates, actual event values and a small recording publisher or counter
+lambda, following `EntityTest`. Domain tests use no mocks, spies, Mockito extensions or
+interaction verification. Every unit test must have a meaningful `@DisplayName` in
+addition to `@Test`; this is the user's explicit requirement, absent from the inspected
+reference tests.
 
-Before finishing, verify these gates for the changed path:
+Keep tests simple: one behavior, visible given/when/then, and assertions on the resulting
+state, payload and queue. For a media trigger, verify the event's resource/path values;
+for publication failure, verify both the emitted prefix and retained queue. Do not use
+sleeping or equality with a second `InstantUtils.now()` call to test time.
 
-- The event names an accepted business occurrence, with the producer and consumers known.
-- Rejection, rehydration and mutation after registration preserve the declared event history.
-- Pending-event ownership covers save, commit, rollback, repeat calls and partial failure.
-- Any durable-delivery claim has evidence at the state/publication boundary and repeat-safe
-  consumer effect; an annotation or mock interaction does not establish it.
-- Payload, timestamps and ordering carry only justified semantics and approved data.
+Report the changed producer or lifecycle contract, the relevant source evidence, executed
+checks and remaining limits. Written scenarios and source inspection are not executed
+tests or measured evidence that the skill improved an agent's behavior.
 
-Run the applicable project checks and distinguish written scenarios from executed results.
-Report the fact/contract, changed path, transaction/event-list owner, verification and any
-remaining gap. A narrow naming repair needs only a concise rationale; a durable boundary
-change belongs in the project's ADR or contract documentation.
+## Boundaries
 
-## Specialist boundaries
+Use `java-ddd` for the base domain foundation, `java-ddd-aggregates` for aggregate behavior
+and copy/factory choices, `java-ddd-repositories` for domain gateway signatures, and
+`java-ddd-testing` for the domain testing conventions.
 
-Use `java-ddd-aggregates` for invariant ownership and aggregate boundaries;
-`java-ddd-use-cases` for action orchestration; `java-ddd-repositories` for gateway mapping
-and rehydration; and `java-ddd-testing` for the family testing strategy.
-Pass the concrete model and failed scenario rather than restating their workflows.
-
-Use `spring-transactions-and-events` for actual listener phases and transaction interception,
-`event-driven-architecture` for service interaction/topology choices, `delivery-semantics`
-for outbox/relay and acknowledgment guarantees, `idempotency` for repeat-safe effects,
-`message-ordering-and-partitioning` for transport order, and
-`schema-evolution-and-compatibility` for stored/published schema changes. Supply occurrence
-identity, transaction resources, consumers and the required replay horizon. `event-sourcing`
-owns choosing events as authoritative state. If these skills are unavailable, preserve
-the explicit boundary and use version-matched primary documentation; do not invent a guarantee.
+Application orchestration, persistence adapters, transaction listeners, integration
+envelopes, outboxes, brokers and event sourcing require a separately authorized scope.
+If requested, hand off to `java-ddd-use-cases`, `spring-transactions-and-events`,
+`delivery-semantics`, `schema-evolution-and-compatibility` or `event-sourcing` as applicable.
+The domain source cannot establish their contracts; do not implement them as prerequisites
+for adding a domain event.

@@ -52,15 +52,16 @@ hold the request: retain transport read timeouts, admission and disconnect handl
 An application byte-limit rejection can use **413**; parser and DTO failures are normally
 **400**, at different stages. Preserve the target API's documented policy and identify
 which layer produces the response. An ingress/container rejection need not share MVC's
-ProblemDetail body. Publish 413 only for operations with that reachable limit; do not add
-it mechanically to every GET or protected bodyless endpoint.
+ProblemDetail body. Distinguish a reachable 413 policy from a conditional service-wide
+catalog such as Customer's; the catalog does not establish a configured limit.
 
 ## Reproducible evidence
 
-The [fixture](../assets/contract-fixture/) sets Boot Jackson depth/string/number properties
-and sends hostile PATCH bodies to the actual product controller. Tests distinguish parser
-rejection from DTO validation and verify the stored description remains unchanged. It does
-not advertise an exact received-byte ceiling or a corresponding 413 response.
+The [Customer reference](../assets/customer-reference/README.md) does not configure explicit
+Jackson parser limits or an exact received-byte ceiling. Its error catalog contains a
+conditional 413 and its handler tests exercise upload error translation, but neither proves
+a Customer upload endpoint or an enforced JSON body budget. Do not add parser properties,
+hostile-input test claims or a local buffering component to this source snapshot.
 
 If the target API requires that ceiling, verify known-length and chunked bodies at the exact
 limit and one byte over, multibyte input and no handler/service effect on rejection. Test the

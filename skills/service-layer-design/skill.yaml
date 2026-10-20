@@ -1,17 +1,17 @@
 schemaVersion: 1
 
 name: service-layer-design
-version: 1.2.4
+version: 1.3.0
 description: >-
-  Designing the layer that fronts business logic: what an application service owns
-  (transaction boundary, authorisation, orchestration, translation) and what it must not
-  absorb, the difference between application and domain services, and whether the layer is
-  warranted at all. Use when every service method is a single repository call, when a
-  service has become where all rules accumulate, when two services call each other and
-  transactions nest, when authorisation is spread between controller and repository, or when
-  a facade is added over a facade. Does not cover where the rules belong
-  (domain-logic-organization), transaction semantics (enterprise-transactions), remote API
-  design (remote-facade-and-dto), or layer dependency direction (layering-and-boundaries).
+  Organizing and reviewing the Java APPLICATION layer exactly as demonstrated by
+  ddd-example/application: aggregate/action packages, independent use-case base classes,
+  abstract action contracts and Default implementations, command/output records, and
+  domain gateway dependencies. Use when locating or adding an application action,
+  reviewing its boundary, or reproducing the reference organization. Preserve the
+  reference's technical and organizational choices; ask about missing patterns instead
+  of supplying another service architecture. Detailed action behavior and tests belong
+  to java-ddd-use-cases; controllers, adapters, transactions and authorization are outside
+  this reference's demonstrated application scope.
 
 license: Apache-2.0
 
@@ -27,31 +27,22 @@ repository:
 
 keywords:
   - service-layer
+  - application-layer
   - use-case
   - application-service
-  - god-service
-  - transactions
-  - spring
+  - ddd
+  - reference-fidelity
 
 files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 
-dependencies:
-  - name: enterprise-transactions
-    version: ^1.0.0
+dependencies: []
 
 suggests:
-  - architecture-and-performance
-  - architecture-decision-making
-  - architecture-refactoring-paths
-  - distribution-boundaries
-  - domain-logic-organization
-  - layering-and-boundaries
-  - offline-concurrency-control
-  - query-objects-and-specifications
-  - remote-facade-and-dto
+  - java-ddd-use-cases
 
 capabilities:
   - reads-source
@@ -60,5 +51,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Service Layer Design
-      short_description: Use cases, boundaries and the god-service failure
-      default_prompt: Use Service Layer Design to review or shape this application service.
+      short_description: Reference-faithful application organization and boundaries
+      default_prompt: Use Service Layer Design to organize or review this application layer against the ddd-example reference.

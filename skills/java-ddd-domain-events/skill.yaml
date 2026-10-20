@@ -1,12 +1,12 @@
 schemaVersion: 1
 name: java-ddd-domain-events
-version: 1.0.0
+version: 1.2.0
 description: >-
-  Model Java DDD domain events when an aggregate transition needs an explicit business
-  fact, handlers see mutable state, rehydration emits duplicate facts, or saving loses
-  pending events. Define immutable payloads, occurrence identity, time, collection
-  lifetime and the integration boundary in domain/application/infrastructure packages.
-  Excludes broker operations, event sourcing and Spring listener configuration.
+  Implement and review Java DDD domain events using the ddd-example domain pattern.
+  Use when adding an aggregate event, preserving pending events during copying,
+  checking media event triggers, or testing publication failure and queue cleanup.
+  Covers DomainEvent, DomainEventPublisher, Entity and VideoMediaCreated with simple
+  domain tests without mocks. Excludes application, infrastructure and delivery design.
 license: Apache-2.0
 authors:
   - name: agent-skills contributors
@@ -27,16 +27,15 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 suggests:
+  - java-ddd
   - java-ddd-aggregates
   - java-ddd-use-cases
   - java-ddd-repositories
   - java-ddd-testing
   - spring-transactions-and-events
-  - event-driven-architecture
   - delivery-semantics
-  - idempotency
-  - message-ordering-and-partitioning
   - schema-evolution-and-compatibility
   - event-sourcing
 capabilities:
@@ -45,5 +44,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Domain Events
-      short_description: Business facts, event lifetime and integration boundaries
-      default_prompt: Use Java DDD Domain Events to model and verify this business event and its lifecycle.
+      short_description: Reference domain events, pending queues and tests
+      default_prompt: Use Java DDD Domain Events to implement and verify this domain event using the ddd-example pattern without mocks and with @DisplayName on every unit test.

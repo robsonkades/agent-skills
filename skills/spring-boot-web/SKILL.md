@@ -3,7 +3,8 @@ name: spring-boot-web
 description: >-
   Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding,
   validation, error responses, Tomcat capacity or consumer contracts need verification.
-  Covers documentation strategy, complete springdoc OpenAPI descriptions, examples and UI.
+  Covers documentation strategy and complete springdoc OpenAPI contracts using the
+  Customer reference's API interfaces, DTO schemas, examples, customizers and error handlers.
   Excludes WebFlux, identity providers and database query design.
 ---
 
@@ -21,6 +22,19 @@ provider to satisfy this skill. Use of WebClient alone does not identify the ser
 Use **Java 25** as the authoring and example baseline. If the target project uses another
 release, state the compatibility difference and respect its constraints unless migration
 is authorized. A skill activation does not silently upgrade the application.
+
+For OpenAPI/springdoc implementation and documentation, follow the current user-designated
+Customer reference and the portable [Customer pattern](references/customer-pattern.md).
+The [complete source index](references/customer-source-index.md) supplies all 41 production
+Java files, seven test classes, build and configuration from the approved working tree of
+C:/git/customer. It includes modified and untracked files and excludes removed modules.
+Use these complete files when reproducing the pattern; a synthetic example or selected
+annotation excerpt cannot replace them. The original checkout is not a runtime prerequisite.
+Preserve its separation of API interface, implementing controller, DTOs, documentation
+annotations/examples, global and feature customizers, and specific/global/servlet error handling.
+Read [coverage and consumer content](references/customer-coverage.md) before claiming an
+API is fully documented. Adapt business names and rules only from the target's evidence;
+do not import Customer's business rules or supporting persistence as a new architecture.
 
 Use the official [Spring Boot documentation](https://docs.spring.io/spring-boot/) for the
 resolved version as the starting authority for MVC auto-configuration and properties.
@@ -94,8 +108,9 @@ Keep shared errors and sanitized unexpected failures in a global advice, such as
 `GlobalExceptionHandler`; introduce local or narrowly scoped handlers only for controller/module
 semantics that differ. Preserve the common response contract and verify handler precedence;
 see [error ownership](references/mvc-contracts.md#global-and-specific-exception-handlers).
-When business failures share code/context, give them a small typed base contract and retain
-the relevant identifier in specific exceptions. Keep Spring/HTTP mapping in the API layer;
+Preserve Customer's independent business exceptions; do not add a shared base absent from
+that source. In another project, retain an established typed code/context contract and
+relevant identifiers. Keep Spring/HTTP mapping in the API layer;
 shared handling must distinguish missing resources, conflicts and unexpected defects.
 
 ## Make the HTTP boundary explicit
@@ -126,8 +141,9 @@ input names, including nested JSON properties and header/query aliases; see the 
 
 For an OpenAPI delivery where many operations share an established 400/500 contract, reusable response components
 can avoid duplicate declarations. Prefer correct springdoc inference or existing annotations;
-use a global customizer when a real cross-group policy needs it. Apply it only to
-owned operations, preserve operation-specific responses/examples, and verify default plus
+use a global customizer when a real cross-group policy needs it. Customer's customizer
+publishes its conditional catalog on every operation; reproduce that policy with its
+conditions, preserve operation-specific responses/examples, and verify default plus
 grouped documents. Register referenced error schemas explicitly; do not depend on one
 controller annotation making a shared schema reachable. Keep unexpected failures observable
 through the project's safe logging/tracing policy while returning sanitized 500 responses.
@@ -149,6 +165,16 @@ usable examples. Apply the same coverage obligation to an agreed REST Docs/guide
 each approach proves only its exercised contracts. Applicable features depend on the API,
 not whether a specification marks a field mandatory.
 
+For a whole-API request, reconcile every operation, representation and polymorphic variant
+with the coverage inventory in that reference; a representative controller is not the
+delivery. Trace validation and normalization through the use case too: creation, replacement,
+PATCH and responses can have different constraints. Resolve contradictions between source,
+tests and prose before promoting a reference project's behavior into a reusable rule.
+For a request to use all Swagger resources, assess every feature family for applicability;
+implement the applicable ones and identify unsupported or unresolved contracts explicitly.
+Ask about missing consumer guarantees after inspection, without inventing them or treating
+unanswered questions as approval to choose a behavior.
+
 Essential decisions remain these:
 
 - Inventoried path/method/media-type variants and public input/output properties define
@@ -166,6 +192,9 @@ Essential decisions remain these:
 
 Read [schemas and examples](references/schemas-and-examples.md) when matching OpenAPI schemas
 to DTOs, PATCH, polymorphism, multipart or examples. Read
+[springdoc integration and customization](references/springdoc-customization.md) for inherited
+API interfaces, composed annotations, asynchronous wrappers, shared error catalogs or lost
+schema metadata. Read
 [Swagger UI and publication](references/swagger-ui.md) when configuring UI, groups,
 security, external exposure, branding, proxy URLs or generation in CI. These references
 separate format, generator, runtime and rendering limitations.
@@ -201,15 +230,15 @@ modules and APIs; `@MockBean`/`@SpyBean` were removed, with Framework `@MockitoB
 `@MockitoSpyBean` available for appropriate bean overrides. Mock identity does not test JWT
 validation. Test transactions do not roll back writes made by another server thread.
 
-For a worked comparison of runtime behavior and generated documentation, load
-[the fixture guide](references/verification.md) and copy
-[the HTTP/OpenAPI fixture](assets/contract-fixture/) to an isolated temporary directory.
-Read only the relevant controller/model/test first. Its extra Unicode constraint and schema
-customizers serve explicit contracts; most controller tasks do not need them. The fixture is
-public and demonstrates no durable storage, authentication or exact HTTP byte limit. It is
-an HTTP/documentation mechanism fixture, not a complete business-service template. Apply the conditional
-security/body-boundary guidance to the actual project when required; do not claim omitted
-boundaries, arbitrary applications or browser interaction were verified by its tests.
+For executable reference code, load [verification](references/verification.md) and copy the
+[Customer source bundle](assets/customer-reference/README.md) to an isolated temporary directory.
+Production code, package structure, pom and runtime configuration retain the reference;
+the seven test classes add only descriptive @DisplayName annotations. Its six operations,
+19 schemas, eight filter variants and conditional error catalog are mapped in the coverage
+reference. Read the relevant source/test before adapting it. Supporting application/domain
+and in-memory storage make the HTTP example runnable; they do not replace a target's design.
+The source has no security chain, durable store or explicit HTTP byte ceiling. Distinguish
+its published error catalog from enabled runtime capabilities and test UI interaction separately.
 
 Deliver changed behavior and consumer examples with targeted check results for implementation;
 for diagnosis/review, deliver prioritized evidence, competing explanations, corrections and

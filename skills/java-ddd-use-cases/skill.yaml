@@ -1,13 +1,13 @@
 schemaVersion: 1
 name: java-ddd-use-cases
-version: 1.0.0
+version: 1.1.1
 description: >-
-  Implement or review Java DDD application use cases when commands, aggregate
-  orchestration, authorization and commit outcomes are mixed. Preserve action-based
-  packages, UseCase/DefaultUseCase contracts and framework-independent commands and
-  outputs; distinguish creation, absence, concurrency and replay. Excludes deciding
-  whether a service layer is needed, strategic context design and Spring or ORM
-  configuration mechanics.
+  Implement or review Java application actions using the catalog reference's
+  category, cast-member, genre, video and media use cases. Use for command/output
+  records, Default implementations, validation and exception differences, gateway
+  sequencing, media cleanup and Mockito unit tests. Preserves the reference's
+  behavior; excludes domain implementation, infrastructure, authorization and
+  transaction protocols absent from that source.
 license: Apache-2.0
 authors:
   - name: agent-skills contributors
@@ -28,7 +28,10 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
-dependencies: []
+  - assets/
+dependencies:
+  - name: service-layer-design
+    version: ^1.3.0
 suggests:
   - java-ddd
   - java-ddd-aggregates
@@ -37,10 +40,6 @@ suggests:
   - java-ddd-repositories
   - java-ddd-domain-events
   - java-ddd-testing
-  - service-layer-design
-  - spring-boot-clean-architecture
-  - spring-transactions-and-events
-  - idempotency
 capabilities:
   - reads-source
   - runs-commands
@@ -48,4 +47,4 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Use Cases
-      short_description: Commands, application orchestration and reliable outcomes
+      short_description: Catalog actions, media lifecycle and Mockito tests

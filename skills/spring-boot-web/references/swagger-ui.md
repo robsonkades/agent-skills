@@ -4,6 +4,11 @@ Read when a task changes UI consumption, document groups, authentication in the 
 customization, exposure, proxy paths or CI publishing. UI behavior is tied to the bundled
 Swagger UI version, not just springdoc's version.
 
+Use the [Customer bundle's browser procedure](../assets/customer-reference/README.md#inspect-swagger-ui)
+for this reference. Production exposes the default document; `contract-test` is a group
+declared only by tests. No security, server selector or upload workflow should be invented
+to demonstrate the conditional UI capabilities described below.
+
 ## Choose the smallest maintained customization
 
 Prefer supported springdoc properties for simple UI settings. Examples of useful decisions

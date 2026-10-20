@@ -1,15 +1,14 @@
 schemaVersion: 1
 
 name: java-ddd-testing
-version: 1.0.1
+version: 1.2.0
 description: >-
-  Write and review Java DDD tests for aggregate invariants, value-object equality,
-  use-case outcomes, gateway rehydration, concurrency conflicts and domain-event durability.
-  Use when extracting behavior into a domain model, testing rejected transitions,
-  replacing repository mocks with in-memory gateways, or checking whether persistence
-  tests protect the aggregate's consistency boundary. Follows domain, application and
-  infrastructure packages. Does not choose bounded contexts or replace general Java
-  test design, Spring test setup or database performance analysis.
+  Write and review Java DDD domain unit tests following the ddd-example domain
+  reference: real aggregates and values, validation handlers, typed IDs, exceptions,
+  utilities and local domain events. Use when adding a domain behavior test, checking
+  validation timing or reviewing assertions that may miss a domain defect. Requires
+  no mocks and @DisplayName on every unit test. Does not implement application,
+  persistence, Spring or message-delivery tests.
 
 license: Apache-2.0
 
@@ -29,7 +28,9 @@ keywords:
   - domain-driven-design
   - aggregate
   - value-object
-  - use-case
+  - domain-events
+  - validation
+  - junit
   - testing
   - clean-architecture
 
@@ -37,6 +38,7 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 
 suggests:
   - java-ddd
@@ -46,10 +48,7 @@ suggests:
   - java-ddd-domain-services
   - java-ddd-repositories
   - java-ddd-domain-events
-  - java-test-design
-  - java-test-doubles
   - spring-boot-testing
-  - architecture-testing
 
 capabilities:
   - reads-source
@@ -58,5 +57,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Testing
-      short_description: Prove domain rules across model, use cases and persistence
-      default_prompt: Use Java DDD Testing to write or review tests for this business rule.
+      short_description: Test domain behavior with real objects and DisplayName
+      default_prompt: Use Java DDD Testing to write or review domain unit tests following the ddd-example reference, without mocks and with DisplayName.

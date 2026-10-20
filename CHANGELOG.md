@@ -10,6 +10,33 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-10-19
+
+### Added
+
+- Package complete reference classes for DDD domain and application implementation,
+  including Entity, AggregateRoot, Identifier, ValueObject, UseCase, NullaryUseCase
+  and UnitUseCase, with source indexes and executable examples.
+- Include the complete current Customer OpenAPI reference: 41 production Java files,
+  seven test classes, build configuration and source provenance. Document all six
+  operations, 19 schemas, eight filter variants and the conditional error catalog.
+
+### Changed
+
+- Align seven DDD domain skills with the designated domain reference, including
+  aggregate organization, identifiers, Gateways, validation, exceptions and events.
+- Align application organization and use-case skills with the designated application
+  reference, preserving command/output records, orchestration and Mockito tests.
+- Require descriptive DisplayName annotations on unit tests. Keep domain tests free
+  of mocks and use fixed past timestamps for deterministic update checks.
+- Replace generic Spring web examples with the Customer pattern: API interfaces,
+  concrete controllers, separate request/PATCH/response DTOs, composed annotations,
+  named examples, customizers and scoped/global/servlet error handling.
+- Bump revised skill versions and regenerate registry integrity hashes. Preserve
+  explicit verification limits, including unavailable Swagger UI browser interaction.
+- Normalize copied DDD assets to repository-standard LF line endings so the
+  validated integrity hashes remain valid after checkout on every platform.
+
 ## [1.12.0] — 2026-10-16
 
 ### Added

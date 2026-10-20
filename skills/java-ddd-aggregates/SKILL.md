@@ -1,107 +1,111 @@
 ---
 name: java-ddd-aggregates
 description: >-
-  Design and implement Java DDD aggregates when deciding which entities must change
-  atomically, moving invariants out of setters, separating creation from rehydration,
-  or preventing concurrent writes from bypassing the root. Covers domain identity,
-  child ownership, valid transitions and aggregate version checks. Use for aggregate
-  boundaries and lifecycle behavior; bounded-context discovery and ORM mapping have
-  separate owners.
+  Implement and review Java domain aggregates using the ddd-example domain contract.
+  Use when organizing aggregate packages, implementing typed roots, new/with factories,
+  validation timing, lifecycle methods, cross-aggregate IDs or collection ownership.
+  Covers Category, Genre, CastMember and Video patterns with domain unit checks;
+  application orchestration, persistence adapters and concurrency protocols are outside scope.
 ---
 
 # Java DDD Aggregates
 
-## Purpose and scope
+## Purpose and authority
 
-Make a business consistency boundary explicit in Java: one root controls the state
-and behavior required to preserve its invariants. An aggregate is neither every
-object reachable from an ORM entity nor a collection of tables with the same prefix.
-This skill owns tactical boundary, identity and lifecycle decisions. Optional
-handoffs are `bounded-context-design` for context boundaries,
-`java-ddd-value-objects` for value semantics, `java-ddd-repositories` for persistence
-implementation, and `java-ddd-testing` for broader test design.
+Implement the domain aggregate patterns captured from `ddd-example/domain`. This is
+the technical reference for this skill, not one optional DDD style among competing
+examples. Preserve its differences between aggregates. Do not replace them with a
+generic Order model, a richer base class, immutable roots, automatic validation,
+transaction annotations or a new persistence version field.
+
+The packaged references contain the relevant contracts and source provenance; the
+authoring machine's `C:\git\ddd-example\domain` path is not a runtime prerequisite.
+Inspect the target domain and build before editing. If a requested business rule or
+new aggregate family has no counterpart in the supplied evidence, ask a focused
+question about the missing rule or reference family. Keep unknown behavior explicit.
 
 ## Workflow
 
-1. **Inspect the actual model.** Read build/toolchain settings, the context's package
-   tree, aggregate/identifier/validator foundations, commands, persistence mappings,
-   transaction owner and relevant tests. Identify all write paths, including bulk
-   updates and maintenance jobs. Keep the project's Java version and dependencies;
-   the illustrative Java fragment uses a Java 17 baseline without frameworks. A
-   reference project or an existing class name is evidence, not proof of a rule.
-2. **Write the invariant before drawing the boundary.** For each relevant command,
-   state what must hold when it succeeds, what state it reads, and whether another
-   writer can invalidate that decision. Separate rules about one object, a root and
-   its children, and independently owned aggregates. Name when the business permits
-   intermediate states; never infer eventual consistency merely to obtain smaller
-   aggregates. When choosing or changing a boundary, read
-   [boundaries and concurrency](references/boundaries-and-concurrency.md).
-3. **Choose identity and ownership.** Distinguish continuity of an entity from the
-   attributes of a value. Use a typed `FooID` for a root's stable domain identity;
-   child identity may be local to that root. Decide who creates, removes and modifies
-   each child. A public child mutator or a returned mutable child can defeat a root
-   even when its collection is unmodifiable.
-4. **Implement intention-revealing transitions.** Prefer `order.submit(...)` or
-   `order.changeQuantity(lineID, quantity)` to public field setters. Validate the
-   proposed result before publishing it into the aggregate. Expected validation
-   rejection must preserve state, audit values and pending events. A notification
-   handler collecting errors must cause the command to reject before mutation;
-   merely invoking `validate(handler)` does not enforce the invariant.
-5. **Separate creation, rehydration and persistence.** Creation (`newFoo(...)` in the
-   reference convention) establishes a new identity and valid initial state.
-   `with(...)` or an explicitly named rehydration
-   factory restores persisted identity, audit data and version without registering
-   new events, generating identifiers or reading the current time. The persistence
-   adapter restores state; it must not replay command methods. When editing these
-   paths, read [Java lifecycle pattern](references/java-lifecycle-pattern.md).
-6. **Close the concurrency boundary.** Every write affecting a root invariant,
-   including child-only changes, must participate in its concurrency protocol.
-   Verify root version checks/locks and persistence of children in the same
-   transaction. Incrementing an audit or revision counter in memory alone cannot prevent a
-   lost update. Do not claim Java thread safety from database optimistic locking;
-   ordinarily confine a mutable aggregate instance to one command execution.
-7. **Verify the changed behavior.** Reuse relevant tests, then add the missing
-   counterexample: rejected command leaves state/events unchanged; a caller cannot
-   mutate an internal child; rehydration preserves stored facts without new events;
-   or two writers cannot both violate an invariant. Run concurrent persistence
-   checks against the actual adapter/database when that guarantee changes. A domain
-   unit test cannot prove transaction isolation or ORM version propagation.
+1. **Map the aggregate to the reference.** Identify its root, typed ID, validator,
+   Gateway interface and associated values/enums in one aggregate package. Keep
+   other roots as typed IDs. Read
+   [aggregate organization](references/aggregate-organization.md) when introducing
+   a root, deciding package placement or reviewing a relationship.
+2. **Select the actual lifecycle family.** Read
+   [factories and lifecycle](references/java-lifecycle-pattern.md) before changing
+   construction, reconstruction, copying, validation or transitions. `Category` and
+   `Video` expose external validation; `Genre` and `CastMember` call `selfValidate()`
+   in their constructor and after assigning updated fields. An exception from the
+   latter does **not** undo those assignments. Preserve the selected family's
+   contract rather than standardizing these paths.
+   When implementing or reproducing a root, read its complete production template:
+   [Category](assets/reference/category/Category.java),
+   [Genre](assets/reference/genre/Genre.java),
+   [CastMember](assets/reference/castmember/CastMember.java) or
+   [Video](assets/reference/video/Video.java). Follow its full signatures, checks,
+   method ordering and clock calls; use the lifecycle reference for dependencies
+   and adaptation rules. Do not infer missing code from the summary tables.
+   Resolve imported and same-package types through the
+   [complete domain source index](../java-ddd/references/source-index.md), which
+   covers all 49 production types across the hub and specialists. These sibling
+   resources require the optional `java-ddd` hub and owning specialists to be
+   available; installing this aggregate skill alone does not supply them. The
+   four root templates are not a standalone Java source set or build.
+3. **Separate new state, restored state and copies.** `newCategory`, `newGenre`,
+   `newMember` and `newVideo` generate an ID and read time once. Full `with(...)`
+   restores the supplied facts. Copy `with(existing)` has aggregate-specific
+   collection and pending-event behavior. `Category.clone()` is a separate,
+   shallow-copy path; do not silently substitute it for `with(...)`.
+4. **Implement the observed transition.** Keep mutable private state, `final`
+   parameters, the actual constructor visibility, typed IDs and methods returning
+   `this` where the reference does. Preserve activation/deactivation, audit fields,
+   null handling and list/set behavior. Unmodifiable accessors do not establish
+   defensive ownership of constructor arguments. Fluent calls do not supply rollback.
+5. **Verify observable domain behavior.** Use real roots, IDs, values and validation
+   handlers. Every domain unit test must have a meaningful `@DisplayName`; use no
+   mocks, spies, Mockito or framework context. Read
+   [focused verification](references/verification.md) for executable examples and
+   cases that distinguish the lifecycle families. Assert the contract at the point
+   it actually runs, without adding business constraints absent from the reference.
+   When checking those paths against the reference module, use
+   [AggregateLifecycleTest.java](assets/AggregateLifecycleTest.java) with its stated
+   prerequisites.
 
-## Java conventions and decisions
+## Scope and handoffs
 
-- Keep concepts under the project's domain package and context-specific subpackages
-  (`com.example.domain.<context>` in the illustration).
-  Follow the established `Foo extends AggregateRoot<FooID>`, `FooID extends Identifier`,
-  `FooValidator extends Validator` and `ValidationHandler` vocabulary when that
-  foundation exists. Reuse `validation.Error`, `Notification`,
-  `ThrowsValidationHandler` and `exceptions.DomainException.with(...)` where provided.
-  For a new model, introduce only the base abstractions that carry a real contract.
-  Constructors and method parameters are `final`; stable fields and dependencies
-  are `final`. State that transitions legitimately replace need not be final.
-- Keep Spring/JPA/HTTP types and repository calls outside the aggregate in this
-  architecture. If the project uses a different mapping approach, preserve its
-  contract while proposing a scoped change; do not silently move every class.
-  Use existing nullability annotations when available; adding an annotation library
-  or upgrading the Java baseline is a separate decision.
-- Prefer immutable value objects and immutable child snapshots on public reads.
-  `List.copyOf` protects the container only. Use private/package-controlled child
-  mutation plus root methods, or replace immutable child state through the root.
-  Package visibility is useful only if package callers respect the same boundary.
-- Keep entity equality stable across legitimate changes. Inspect the existing
-  equality/proxy contract before modifying it; do not generate equality/hash from
-  mutable fields. A database surrogate identifier and a domain `FooID` can coexist,
-  but a generated nullable database key must not silently become domain identity.
-- Prefer a smaller boundary only when its true invariants still hold. Read models
-  may combine many roots without creating a new write aggregate. An unbounded
-  collection or frequent conflicts calls for evidence about ownership and write
-  patterns, not an automatic split or disabled locking.
+- `java-ddd` supplies the canonical foundation sources. Before introducing a root
+  or resolving its typed ID, read
+  [AggregateRoot.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/AggregateRoot.java),
+  [Entity.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Entity.java),
+  [Identifier.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Identifier.java)
+  and [ValueObject.java](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/ValueObject.java).
+  Reuse this foundation and its exceptions/utilities; root identity follows the
+  inherited ID-based equality.
+- `java-ddd-value-objects` owns concrete IDs and media/value semantics.
+  Preserve each ID factory's behavior instead of passing strings between roots.
+- `java-ddd-domain-services` owns validators and validation handlers. A validator
+  reports the root's current state and performs no Gateway call.
+- `java-ddd-repositories` owns the domain Gateway interfaces. Aggregates do not call
+  those interfaces; adapter implementation remains outside this domain-only task.
+- `java-ddd-domain-events` owns buffering, publication and media event semantics.
+  Read it when changing pending events; a successful domain method is not proof of
+  delivery or persistence.
+- `java-ddd-testing` owns the broader domain testing conventions.
 
-## Deliverable and limits
+Keep Spring/JPA/HTTP, application use cases, transactions, brokers and database
+concurrency mechanisms outside this skill's implementation. The source domain has
+no aggregate version field or locking protocol. A request for such guarantees needs
+separate scope and evidence; a domain unit test cannot establish them.
 
-For an implementation, deliver the root/child ownership decision, affected commands
-and focused changes with executed checks. For a review, identify the write path that
-can break the invariant and the smallest justified correction; an adequate model may
-need no changes. State unresolved business consistency requirements separately from
-observed code defects. Report whether validation covered domain behavior, persistence
-concurrency or only a design sketch. Do not claim a boundary is correct without the
-business rule, or that a version annotation protects child writes without evidence.
+## Deliverable and compatibility
+
+For implementation, deliver the affected root and supporting domain changes, identify
+the reference family followed, and report executed checks. For review, show the
+source method and the behavioral mismatch before proposing a correction. Preserve
+adequate code and separate unknown business requirements from observed differences.
+
+Keep the target Java and dependency versions. The reference build inspected for
+this review declares JUnit Jupiter 5.9.2 but no explicit Java toolchain/release in
+its shared conventions. The bundled verification class uses Java 17-compatible
+source; that is an example compatibility target, not a claim about the reference's
+declared Java baseline. Do not upgrade a project to apply this skill.

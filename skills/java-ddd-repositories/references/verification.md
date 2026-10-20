@@ -1,99 +1,88 @@
-# Verifying aggregate persistence contracts
+# Verifying the domain Gateway boundary
 
-Read when implementing a gateway, mapper, concurrency protocol or test double.
-Reuse the target's test framework, fixtures and database harness. The cases below
-are acceptance guidance, not claims that tests ran in the consuming project.
+Read after changing a domain port or its supporting types, or when reviewing a
+claim about their behavior. The cases here are reproducible acceptance guidance;
+they are not evidence of executed agent evaluations or adapter tests.
 
-## Round trip outside the first persistence context
+## Source and structural checks
 
-Create a representative root with non-default identity, timestamps, nullable
-lifecycle fields, value objects and multiple owned children. Persist and commit,
-clear/close the initial persistence context, then reload through the domain port
-in a fresh transaction. Assert:
+Compare against `ddd-example/domain`, commit
+`8d964ce4106c2299164e28980ae7553e2afbdc92`, using the complete Java files linked in
+the Gateway and boundary-type references. If a different revision or a conflicting
+target contract is supplied, surface the difference before choosing a new behavior.
+If the reference checkout is unavailable, the bundled files establish the recorded
+source for these nine types only; request missing source for an uncovered decision
+instead of claiming to have inspected it.
 
-- Business identity, persisted revision and complete owned state match their
-  documented storage representation; unchanged technical IDs remain unchanged.
-- Audit times preserve recorded facts with declared storage precision. Advance the
-  test clock between save/load so an accidental `now()` mapping fails visibly.
-- Child identities and order survive when meaningful; removed children are removed
-  only as intended and cannot be reassigned to another root accidentally.
-- Reconstitution records no newly raised events. Saving an aggregate with pending
-  events preserves the application's agreed capture/outbox contract.
-- A missing identity returns absence, while a controlled storage failure and corrupt
-  persisted value follow their separate error contracts.
+Check all five ports, not only the first CRUD-shaped interface:
 
-Do not assert only `aggregate.equals(reloaded)`: an entity equality method often
-compares ID alone. Compare relevant fields and subsequent behavior. A test that
-reads from the same first-level cache does not prove database round-trip fidelity.
+- Category, Genre and CastMember each have six declared operations with their own
+  aggregate/ID types and `SearchQuery` / `Pagination<Aggregate>`.
+- Video has five operations, `VideoSearchQuery` / `Pagination<VideoPreview>`, and
+  no `existsByIds`.
+- MediaResourceGateway has four operations and stays separate from VideoGateway.
+- Query/preview/resource types remain in domain with their exact field order and
+  types. In particular, typed lookup IDs do not justify changing `VideoPreview.id`.
+- Domain signatures/imports introduce no framework pagination, storage SDK types,
+  JPA entities, technical repository inheritance or concrete adapters.
 
-## Concurrency and transaction evidence
+Compile the affected domain types with the consuming project's configured Java
+baseline. Source comparison and compilation establish shape/type consistency;
+they do not establish runtime absence, sorting, concurrency or commit behavior.
+No new dependency or build system is needed just to check a port declaration.
 
-Use the production database engine/version where its semantics matter, with a
-temporary schema/container under the project's harness. Coordinate competing
-transactions using barriers/latches at specific steps, not sleeps:
+## Useful domain tests, without mocks
 
-| Case                                                                                    | Required observation                                                                                      |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Two loaded copies update revision N                                                     | One accepted change; the stale update returns the specified conflict and cannot overwrite committed state |
-| Two copies at nine lines each add a different tenth line                                | Root invariant remains true; child-only paths cannot both commit an eleventh line                         |
-| Two transactions edit distinct child rows whose combined values have a root constraint  | Shared root protocol protects the combined invariant, even when neither root scalar changes               |
-| A failure occurs after the root write but before child/outbox completion                | No partial aggregate or required outbox change is committed                                               |
-| Flush succeeds and a later transaction step fails                                       | Caller receives failure and a fresh transaction observes rollback                                         |
-| Two creates use the same normalized natural key within one tenant                       | Exactly one succeeds; the other receives the defined duplicate outcome                                    |
-| Strict create receives an ID already belonging to a persisted root                      | Defined collision outcome; the existing root and its children remain unchanged                            |
-| Update-only receives a missing ID, including deletion after a preflight existence check | No insert or resurrection; the defined missing/conflict outcome reaches the caller                        |
-| The same key appears in two permitted tenant scopes                                     | Behavior matches scoped uniqueness, with no cross-tenant read/write exposure                              |
-| A root or child changes between separate load queries                                   | Loaded aggregate satisfies the declared consistency protocol rather than combining incompatible revisions |
+Use the real domain objects and the existing JUnit structure. The reference's
+`domain/src/test/java/com/robsonkades/admin/catalogo/domain/UnitTest.java` carries
+`@Tag("unitTest")`; tests extend it and use `Assertions` with
+`given...when...then...` names, expected/actual variables and direct assertions.
+The explicit project requirement adds `@DisplayName` to every unit test method;
+the source tests do not yet contain that annotation. Do not copy that omission.
 
-For a version-checked load, pause after reading the root at N, commit a root/child
-change at N+1 in another transaction, then resume child loading and the revision
-check. Verify the final check reaches storage and the whole load retries or fails;
-another `find` returning the managed N instance must not make this test pass. With
-a verified snapshot alternative, require a coherent N result instead of demanding
-N+1. Include enabled persistence/query caches in the relevant setup.
+A port with no implementation has no persistence behavior to exercise. Do not
+mock a Gateway, create a fake database in domain, or assert a configured stub's
+return value. Do not test trivial record accessors just to increase coverage. When
+the changed domain behavior warrants tests, meaningful cases include:
 
-Test a stale delete or concurrent deletion if delete is in the changed contract.
-Do not infer missing versus stale from a zero-row update without the contract's
-defined discrimination. Do not require exact exception classes from the application
-that belong only to the persistence adapter; assert the translated outcome too.
+| Behavior under change | Real-object check                                                                                                                                           | Mistake the check can detect                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `Pagination.map`      | Map a nonempty page whose `total` exceeds its item count; verify transformed items and unchanged metadata. Include an empty page if relevant to the change. | Replacing total with page size or losing metadata during conversion |
+| `VideoPreview(Video)` | Convert a Video with explicit, distinct creation/update timestamps; compare the five projected facts.                                                       | Swapping timestamps or generating a new ID/time                     |
+| Aggregate `with(...)` | Construct actual roots from supplied ID/state; inspect fields, relevant validation and event-list behavior for the chosen overload.                         | Calling a creation factory or assuming every copy clears events     |
 
-For tenant-aware persistence, supply an ID owned by another tenant to lookup,
-update and delete. Assert no disclosure or mutation under the defined access policy.
-Use trusted scope in the test entry instead of letting the request choose its own
-tenant. Include a wrong-parent child identity if child ownership can be supplied.
+Keep tests simple and readable, with `@Test` plus a descriptive `@DisplayName` on
+each test. Use `java-ddd-testing` for detailed test examples. Do not assert only
+aggregate equality when checking restoration: the reference Entity compares
+concrete class and ID, not all state. No Gateway mock is needed for these checks.
+For temporal transitions, supply fixed past timestamps through `with(...)`; do
+not depend on two consecutive clock reads differing, add sleeps, or mock time.
 
-## Fakes must expose missing saves
+## Reproducible review cases
 
-A fake storing `Map<ID, Aggregate>` references can make a use case that forgets
-`save` appear correct. Store immutable snapshots or independently copy the root and
-every mutable child on write; reconstitute independent objects on read. A shallow
-list copy does not isolate mutable elements. Immutable value objects may be shared.
+These are teaching cases and expected outcomes, not a measured before/after result.
+Use task inputs separately from expected criteria in an independent evaluation.
 
-Run these cases against the fake and the real adapter where applicable:
+| Task input and available context                                                  | Expected behavior/output                                                                                                 | Failure conditions                                                                           |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Reproduce CategoryGateway using the supplied domain source.                       | Keep all six methods, concrete typed ID, domain pagination, separate create/update and Iterable-to-List existence query. | Generic base repository, omitted existence query, `boolean existsByIds`, or framework types. |
+| Reproduce VideoGateway instead; all other conditions stay the same.               | Keep five methods and return `Pagination<VideoPreview>` using `VideoSearchQuery`; preserve preview in domain.            | Copying Category's aggregate listing/existence method or relocating the preview.             |
+| Add media storage support following the reference.                                | Reproduce the separate four-method MediaResourceGateway with VideoResource input and distinct media return types.        | Merging with VideoGateway, inventing upload/cleanup guarantees, or exposing an SDK type.     |
+| Document ordering, defaults and null-filter behavior from VideoSearchQuery alone. | State the exact fields and the missing behavior; ask if the requested implementation depends on those choices.           | Invented default sort, page origin, filter combination or validation.                        |
+| An update must reject stale state; only domain declarations are supplied.         | Report that no concurrency protocol is established and identify the cross-layer requirement.                             | Adding expectedVersion/locks/unit of work or declaring last-write-wins proven.               |
+| Simplify the page mapper by setting total to mapped item count.                   | Preserve the recorded total and propose the nonempty-page behavior check above.                                          | Accepting loss of pagination metadata.                                                       |
+| Prove persistence works by mocking CategoryGateway in a domain test.              | Explain the absence of runtime implementation evidence; retain useful real-domain tests, all with DisplayName.           | Stub-verification tests, Mockito, or a claim that they establish persistence correctness.    |
+| Prove every restored aggregate has an empty event buffer.                         | Inspect overloads; identify Video.with(Video) preserving buffered events, without changing its contract.                 | Universal empty-buffer assertion or silent event loss.                                       |
 
-1. Save A, then mutate the caller's A without another save. A fresh read is unchanged.
-2. Load B and C independently; mutate B without save. C and a fresh read are unchanged.
-3. Save a valid update of B. A fresh read sees the new state; C retains its old snapshot.
-4. Attempt to save stale C. The defined conflict occurs if that is part of the port
-   contract; a fake must not silently implement last-write-wins instead.
-5. Reconstitute after persistence. No new domain events or current-time audit facts
-   appear solely from loading or copying.
+The first two cases form a constraint-changing pair: changing only the reference
+port must change the query/result/operation set. The missing-evidence cases must
+produce a bounded conclusion and a focused clarification, not invented behavior.
 
-Capture snapshots through explicit persisted state or a dedicated copy/reconstitution
-path. Copying via public business transitions changes semantics. Do not let the fake
-own a second set of business rules; those still run in the aggregate. Its contract
-tests cover observable port behavior, not database locks, transaction propagation
-or every provider exception.
+## Report the coverage actually obtained
 
-## Boundary and reporting
-
-When dependencies change, verify no domain/application production type imports JPA,
-Spring Data, the concrete gateway, or framework pagination. Check signatures as well
-as method bodies. An architecture rule must select the actual packages and reject a
-temporary known violation in an isolated fixture; an empty selection proves nothing.
-
-Report commands, executed test counts, relevant engine/provider versions and any
-skipped tests. Separate mapper/unit evidence, fake contract evidence and database
-commit/concurrency evidence. A passing fake test or H2 run does not establish the
-production database's isolation or constraints. A proposal with these cases written
-but unexecuted remains a proposal with a verification plan.
+Report the compared source revision, files, commands and executed test counts.
+Separate signature comparison, compilation and real-object behavior checks. List
+unexecuted tests and unresolved behavior explicitly. Adapter mapping, uniqueness,
+sorting, failure translation, database round trips, transactions and concurrency
+remain outside a domain-only result. Written cases and source inspection are not
+executed behavioral evaluations of an agent using this skill.

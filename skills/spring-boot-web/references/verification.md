@@ -1,9 +1,132 @@
-# Reproduce HTTP and documentation checks
+# Reproduce Customer documentation checks
 
-Load when using the [executable example](../assets/contract-fixture/) or interpreting its
-evidence. Read its [README](../assets/contract-fixture/README.md) and relevant source first.
-Copy to a temporary directory; Maven output belongs there. The manifest packages source,
-not pre-existing build output.
+Read the [executable reference README](../assets/customer-reference/README.md),
+[source index](customer-source-index.md) and [coverage matrix](customer-coverage.md).
+Copy the bundle to a temporary workspace; build output must not enter the skill package.
+It contains all 41 production Java files and seven test classes. The source is the current
+working tree, including local changes and new files; removed modules remain excluded.
+
+## Verify source fidelity first
+
+Compare every path in [source-provenance.json](../assets/customer-reference/source-provenance.json)
+with the authoritative checkout. Production Java, pom.xml and application.yaml must match.
+Test files differ only by the DisplayName import and annotations: strip those additions and
+compare the rest. All 56 test methods must have DisplayName; retain assertions and setup.
+
+When refreshing, inventory the checkout again, including new collaborators and tests.
+HEAD alone is insufficient for a dirty working tree: preserve hashes and the selection rule.
+Never edit the reference project to make a skill example pass or restore deleted classes
+from an older commit.
+
+## Execute the packaged source
+
+| Layer         | Reference baseline                                                   | What to observe                                              |
+| ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Java          | Java 25, no preview                                                  | Compiler release and actual runtime                          |
+| Build         | Maven 3.9+, Boot parent 4.1.1                                        | Managed dependency graph and successful compilation          |
+| Documentation | springdoc webmvc-ui 3.1.1                                            | Concrete payloads and customization in generated output      |
+| Specification | Emitted OpenAPI 3.1.0                                                | Six business operations, 19 schemas, eight filter variants   |
+| Runtime       | In-memory repository; no production groups/security/server overrides | Do not infer durability, authentication or an ingress policy |
+
+Run `mvn -B -ntp test` in the temporary copy; use `-o` only with the exact dependencies
+already cached. Seven classes contain 56 test methods and produce **126 test executions**.
+Both the original working-tree copy and the independently copied packaged files passed
+with no failures, errors or skips on Java 25.0.3 and Maven 3.9.15 during this review.
+Rerun after subsequent source changes rather than transferring this result automatically.
+Expected error logs from injected failures do not
+replace the Surefire result.
+
+Tests write `target/openapi/openapi.json` and `target/openapi/contract-test.json`.
+The latter is a test-only group. Production declares no GroupedOpenApi bean. The unannotated
+documentation probe is also test-only; exclude it when counting production operations.
+
+## What each check establishes
+
+- **Operations and properties:** compare interface mappings and DTO/record properties to
+  generated output. Cover every media type, parameter/default, required/null state,
+  concrete response, Location and retrieval link. The [matrix](customer-coverage.md)
+  inventories all six business operations and 19 schemas.
+- **Search composition:** verify all eight singleton tags, discriminator mapping, use-site
+  oneOf and variant allOf. Check named examples, nullable enums, both allowed date bounds,
+  invalid ranges, sort priority and collection limits.
+- **Distinct write paths:** compare create/PUT Bean Validation to tree-based PATCH and
+  domain normalization. Preserve different text/date/state rules. Execute complete write
+  examples, empty/null/unknown-field PATCH failures and supplied-address requirements.
+- **Error ownership:** exercise scoped business advice, framework hooks, unexpected failures
+  and hidden servlet dispatch. Assert status/body/media type/instance, headers such as
+  405/Allow, validation extensions and committed/disconnected behavior. Conditional
+  catalog entries such as 401/429 do not establish runtime enforcement.
+- **Customization:** default/group tests cover inherited metadata, ApiRequestBody aliases,
+  async unwrapping and business/common error merging. If changing the merge algorithm,
+  also test explicit response references, incompatible schemas, singular examples,
+  preserved named examples/headers and repeated customization.
+- **Readable tests:** retain focused assertions and parameterized cases, with DisplayName
+  on every test method. Mockito in the MVC slice comes from this reference and does not
+  change the separate no-mocks rule for DDD domain tests.
+
+HTTP tests use MockMvc and asyncDispatch; direct handler tests are not network tests.
+No source test establishes DELETE, code-point validation, configured parser limits
+or an exact body-byte budget.
+
+## Validate documents, examples and UI separately
+
+Use a compatible OpenAPI validator on both generated documents and a JSON Schema 2020-12
+validator on media examples and positive/negative boundaries. Configure format assertions
+and resolve local references. A parser or selected JSON assertions are not a general
+schema validator. Report warnings by cause, including intentionally absent security.
+
+Execute the [browser flow](../assets/customer-reference/README.md#inspect-swagger-ui) against
+the isolated packaged application. Inspect descriptions, examples, schemas, filter variants
+and successful/error Try it out calls. An HTML 200 or MockMvc result does not execute UI
+JavaScript. Report an unavailable browser as a specific gap.
+
+Customer's @Size versus JSON Schema length units, restricted nested PATCH semantics and
+conditional error catalog require precise descriptions; do not hide them to claim exact
+conformance. These tests do not establish production ingress, security, durability, uploads,
+streaming or generated-client compatibility. Exercise these when a target API contains them.
+
+Application tests do not demonstrate controlled agent improvement. The review cases below
+specify decisions to assess; they are not a report of executed agent comparisons.
+
+### Recorded checks for this snapshot
+
+Both generated documents passed Redocly CLI 2.65.0 with its minimal rules. Fourteen warnings
+remain across the two files: one generated test-server URL warning and six absent-security
+warnings per document. The source has no security scheme; adding one would fabricate policy.
+Ajv 8.20.0 with ajv-formats 3.0.1 validated all 102 media-example occurrences and eight
+null/enum/date-bound cases per document, with no failures. Shared/repeated examples are
+occurrences, not 102 independent consumer scenarios.
+
+The packaged server also passed seven real HTTP exchanges on loopback with a random port:
+create, follow Location, list, search, replace, patch and an empty-patch business 400.
+Their bodies validated against the emitted response schemas. The UI HTML and bundle reference
+were reachable, but no browser was available. Swagger UI rendering and Try it out remain
+unverified; use the README flow to complete that check. This limitation does not change the
+recorded HTTP, document and schema-validation results.
+
+## Documentation review cases
+
+Use these reproducible cases when reviewing a whole-API documentation change or the
+[integration mechanisms](springdoc-customization.md). They are specified behavioral cases,
+not a report of executed agent comparisons. Keep expected outcomes separate from an actor's
+task input when running an evaluation. Existing application tests can verify the technical
+mechanisms without establishing that an agent using the skill will make every correct choice.
+
+| Request and context                                                                                                                        | Expected behavior and required artifact                                                                                                                   | Failure conditions                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Document all operations in an MVC API whose mappings and composed request-body annotations live on an interface; returns use WebAsyncTask. | Inventory effective mappings, retain annotation ownership, verify aliases and unwrapped payloads in default/group output; execute final async responses.  | Empty body docs, missing inherited route, executor schemas, or an invented 202 job protocol.                                                      |
+| Document a search body containing eight tagged filter variants, nullable enum defaults, sort priorities and from/to bounds.                | Verify every tag/mapping and branch; validate examples for all variants, null/default states, both allowed date bounds and invalid combinations.          | Base/variant composition loop, overlapping oneOf alternatives, null rejected by enum despite nullable type, or oneOf rejecting both valid bounds. |
+| Same tagged union, but a child property is a legitimate recursive tree.                                                                    | Preserve recursive data references with cycle-aware traversal and finite examples; distinguish them from a same-instance composition loop.                | Flattening or banning every circular reference to make the first case pass.                                                                       |
+| Create validates a maximum length and past date; tree-based PATCH accepts longer text and today's date.                                    | Separate input and output schemas, trace both validation paths, document normalization and compare responses after both writes.                           | Copying create bounds to PATCH/output or silently tightening runtime behavior.                                                                    |
+| PATCH advertises RFC 7396 but replaces a supplied address and requires all its fields.                                                     | Show the implementation/protocol discrepancy and request the intended contract before behavioral changes; document known restrictions.                    | Claiming full recursive merge compliance from the media type or changing the API without resolving intent.                                        |
+| A shared error catalog merges with specific responses, references and single examples.                                                     | Verify schema-compatible merges, ownership of refs, example exclusivity, preserved headers/links/successes, idempotence and group isolation.              | Cross-controller business errors, incompatible generic examples, overwritten explicit responses, or claiming catalog 401/429 proves enforcement.  |
+| Two handlers share a method/path with different media types, and one published group excludes a linked operation.                          | Inventory both variants, verify both content entries and repair or explicitly resolve the group's operation link.                                         | Using operation count as completeness or publishing a dangling operationId.                                                                       |
+| Request all Swagger features, but there is no auth, upload or outbound webhook contract and public server URLs are unknown.                | Complete evidenced operation/property documentation, record inapplicability, ask about genuinely unknown publication data and keep its status unresolved. | Fabricated provider/production URL, unused endpoints added for annotations, or a false complete/verified claim.                                   |
+
+For a documentation delivery, report the inventoried operations/variants and schemas/property
+gaps, generated artifacts/groups, checks run and unresolved contract decisions. Separate
+document parsing, dialect/schema validation, HTTP conformance, UI interaction and generated
+client checks. A pass at one layer is not a pass at the others.
 
 ## Acceptance for a complete API
 
@@ -35,85 +158,3 @@ process-local storage and public loopback access can fit that contract. A README
 cannot silently change an ordinary business-service request into that demo. Report unavailable
 database/identity/runtime checks precisely; complete independent work and keep the affected
 delivery claim open instead of presenting a test count as service completeness.
-
-## Compatibility contract
-
-| Layer          | Example baseline                                  | Interpretation                                                |
-| -------------- | ------------------------------------------------- | ------------------------------------------------------------- |
-| Source/runtime | Java 25, no preview                               | Respect another project's baseline; do not migrate implicitly |
-| Build          | Maven 3.9+, Boot parent 4.1.1                     | BOM controls Framework/Jackson/Tomcat                         |
-| Documentation  | springdoc webmvc-ui 3.1.1                         | Inspect transitive Swagger Core/UI before using extra APIs    |
-| Specification  | OpenAPI 3.1                                       | Verify emitted dialect and consumer support                   |
-| Environment    | Loopback, random port, `/api`, process-local data | No database, security dependency or external service          |
-
-The springdoc 3.1.1 parent declares Boot 4.1.0. That provenance does not establish the
-fixture's 4.1.1 compatibility: run its tests on the actual pair. Record runtime JDK/Maven,
-compiler release, resolved dependencies and observed results. A prior result does not
-establish a changed example or an all-Boot-4 guarantee.
-
-## Why these examples remain executable
-
-The useful consumer flow is create, follow Location, inspect optional/nested fields, update
-without confusing omission and null, and delete with a bodyless 204. Generated examples
-are sent to the server; annotations alone cannot prove they work. The contract tests compare
-actual MVC mappings with both published documents and check schemas/statuses/examples.
-
-Additional mechanisms each have a specific reason:
-
-- The violations extension must retain multiple messages for a field. The advice uses
-  framework exception hooks to preserve statuses and headers, including 405/Allow and
-  return-value validation as 500. Its input names match public DTO/binding names; generic
-  Jackson path translation is unnecessary for that example.
-- The typed business-error family retains the requested ID/SKU without depending on HTTP.
-  Tests inspect that context and compare safe 404/409 codes/examples in both published groups;
-  local/scoped advice must preserve the shared envelope and leave other controllers to the
-  global policy. This does not establish any real application's authorization/existence policy.
-- The explicit Unicode contract uses code-point length. HTTP tests exercise supplementary
-  characters at/over its limits; replacing it with `@Size` would change the wire contract.
-- JSON binding rejects number/boolean-to-text coercion, quoted dimensions and fractional
-  truncation while retaining exact integer forms such as `1.0`. HTTP tests compare generated
-  types in both groups, check safe 400 responses and no state mutation, and retain create's
-  unknown-property ignore policy. This tests MVC binding, not automatic validation of direct
-  Java calls; the use-case/domain boundary owns semantic invariants outside HTTP.
-- The tested generator pair needed an explicit null-or-object union for referenced dimensions
-  and a typed collection example. Targeted customizers preserve both groups. Numeric defaults,
-  omitted default ProblemDetail type and operation-specific errors also have regression checks.
-  Reuse these corrections only when the target generator exhibits the same mismatch.
-- Boot properties configure parser depth/string/number limits. Hostile PATCH bodies must
-  produce a parser error while the stored product remains unchanged; a small invalid DTO
-  instead produces the documented violations extension. This is not an exact body-byte test.
-
-Test-only fault injection exercises local/scoped exception ownership, unexpected exceptions
-and invalid return values through the real MVC boundary. The probes and scoped advice never
-ship in the runnable application's main source. Expected ERROR logs are diagnostics, not test failures.
-
-A synthetic JWT issuer, separate security chain, generic field-path resolver and an arbitrary
-local byte-buffer policy are intentionally absent. The skill retains their relevant decisions
-in [MVC boundaries](mvc-contracts.md) and [request bounds](request-bounds.md); verify them against
-a project that actually needs those contracts instead of copying test scaffolding.
-
-## What to verify separately
-
-Generated documents are written to `target/contracts/`. Use the consumer's compatible
-OpenAPI/JSON Schema validator and semantic diff tool for full dialect/example validation.
-Selected JSON assertions are not a general validator. The UI HTTP check observes assets and
-configuration; use the README browser flow to establish JavaScript behavior and Try it out.
-
-No test here establishes authentication/authorization, public error-name translation under
-custom Jackson naming, an exact HTTP byte ceiling, slow clients, decompression, ingress,
-multipart, polymorphism, streaming, generated clients or browser interaction. The references
-explain those conditional contracts; exercise them only when they exist in the target API.
-Do not count an absent feature as tested, or add it solely to expand the example.
-
-For unavailable tools, a structured walkthrough can check decisions but must be labeled as
-such. Useful pairs include an adequate enforcing ingress versus a bypassable ingress with
-an exact local byte guarantee; a simple String field versus an absent/null-sensitive PATCH;
-or an I/O-starved endpoint versus CPU saturation with the same capacity. A correct decision
-changes only when the governing constraint changes. Agent comparisons require separate
-fixed inputs and comparable runs; example tests do not demonstrate behavioral improvement.
-
-Sources: [Boot dependency versions](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html),
-[springdoc 3.1.1 parent](https://repo.maven.apache.org/maven2/org/springdoc/springdoc-openapi/3.1.1/springdoc-openapi-3.1.1.pom),
-[Boot Servlet and Problem Details support](https://docs.spring.io/spring-boot/reference/web/servlet.html),
-[Boot Jackson parser properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html),
-[Boot 4 migration](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide).

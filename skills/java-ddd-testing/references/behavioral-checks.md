@@ -1,110 +1,155 @@
-# Behavioral checks and trustworthy fakes
+# Domain behavioral checks
 
-Read for domain/application tests or when a passing fake may conceal a missing write.
-The scenarios below are test designs, not an executable suite or verified application
-behavior. Map their names and operations to the project's real contracts.
+Read when selecting assertions for a domain type or reviewing whether a green test
+establishes its claimed behavior. These rules are extracted from
+`C:/git/ddd-example/domain`, inspected at commit
+`8d964ce4106c2299164e28980ae7553e2afbdc92` with a clean working tree. Recheck the
+current files; this record is not a substitute for missing source access. Ask for
+the reference when unavailable, rather than filling its gaps from another DDD model.
 
-## Domain: identity, values and transitions
+Paths below are relative to `domain/src/main/java/com/robsonkades/admin/catalogo/domain`
+or the corresponding `domain/src/test/java` package. The source and its tests are
+the technical evidence; `@DisplayName` on every unit test and the no-mocks rule
+are explicit user requirements for this skill. Fixed past dates for update-time
+tests are also explicitly authorized, as described below.
 
-Keep `OrderTest` beside the domain package it exercises. Construct real domain objects;
-Spring, persistence entities and infrastructure gateways add no evidence for a local rule.
+## Test shape and setup
 
-For an invariant-preserving `Order.submit()` with draft/submitted states, use independent
-cases:
+All eight concrete test classes extend `UnitTest`, which declares
+`@Tag("unitTest")`. The 65 source test methods use JUnit `@Test` and
+`Assertions`, readable `given..._when..._then/should...` names and local expected
+values. No domain test imports Mockito or declares `@DisplayName` in this revision.
+Add `@DisplayName` to each new or revised unit test; do not describe it as a source
+annotation that already exists.
 
-| Given and action                                | Expected business evidence                                                                                                          |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Eligible draft; submit once                     | Submitted state, stable business ID, defined audit change and one new `OrderSubmitted` event if the model emits events              |
-| Ineligible draft; submit                        | Defined error/result, original fields and audit data, no new event                                                                  |
-| Already submitted; submit again                 | Explicit retry policy: rejection or idempotent success, with no duplicate success event unless the contract explicitly requires one |
-| Submitted order; attempt a protected child edit | Rejection before changing child contents, totals, audit data or pending events                                                      |
+`Fixture` provides valid objects and typed IDs for related aggregates. Its preset
+`Category`, `Genre`, `CastMember` and `Video` methods return copies through each
+type's actual copy operation. It also uses Faker for names, booleans, years, durations
+and enum values. Use it only where those variations cannot decide the assertion.
+Explicit literals in the existing tests are the model for null, blank, limit,
+status and event-trigger cases. Do not add a generic builder framework or random
+boundary generator when a short direct factory call states the case clearly.
 
-Capture immutable before-values. Keeping `before = order` or retaining its mutable child
-list creates an alias, not an observation of the previous state. If setup already emits
-events, compare event count/content before and after the command rather than incorrectly
-asserting the entire event buffer is empty.
+## Validation and transitions
 
-Test each meaningful boundary: zero versus one item, exact maximum versus one above it,
-crossing a period boundary, mismatched currency, or an operation after cancellation. Use
-only boundaries in the actual rule. For notifications, assert expected codes/fields and
-all independent errors that should accumulate; assert ordering or exact text only if
-contractual. Deferred validation may permit a candidate to be incomplete: test the agreed
-acceptance boundary, including that invalid candidates cannot be committed or published.
+| Evidence                                                                        | Meaningful test choice                                                                                                                                                                                | Incorrect extrapolation                                                                                                |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `category/Category.java`, `CategoryValidator.java`, `CategoryTest.java`         | Call `validate` after create/update. Name is nonnull, nonblank and trimmed length 3–255. Description can be blank. Verify activation/deactivation, stable ID/creation date and defined deletion date. | Factory always throws for an invalid name; description is required; invalid update is rolled back.                     |
+| `castmember/CastMember.java`, `CastMemberValidator.java`, `CastMemberTest.java` | Factory/update throws `NotificationException` for invalid name or null type. Name trimmed length is 3–255. Independent name/type errors accumulate through internal `Notification`.                   | Name rejection makes the whole update atomic; every validation handler collects all errors.                            |
+| `genre/Genre.java`, `GenreValidator.java`, `GenreTest.java`                     | Name trimmed length is 1–255. Constructor/update self-validates. Null categories on update become empty; null add/remove and null/empty bulk-add return without timestamp changes.                    | Category's minimum length applies; null association input always throws; duplicate IDs are automatically deduplicated. |
+| `video/Video.java`, `VideoValidator.java`, `VideoValidatorTest.java`            | Explicit validation checks nonblank title/description, trimmed maxima 255/4000, and nonnull launch year/rating. Other fields stay valid while exercising one branch.                                  | Validator enforces positive duration, a year range, existing related IDs or a publication policy absent from its code. |
 
-For value objects and typed IDs:
+Test exact minimum/maximum and adjacent values when the changed rule involves a
+length boundary. Keep the expected literal independent of the validator constant;
+a test that derives both invalid input and expected limit from a changed constant
+can conceal a broken contract. Do not replicate every unchanged branch as a
+mandatory test count.
 
-- Equal independently constructed values must compare equally and have equal hash codes;
-  exercise `HashSet` membership or a map lookup with the independently constructed key.
-- Check distinct values and the domain's normalization policy. Do not assume `10.0` and
-  `10.00` mean the same money representation, or that differently cased business keys
-  are interchangeable; establish the policy first.
-- Check reflexivity, symmetry, transitivity and null handling when equality is custom.
-  Unequal values need not have different hash codes. The Java contract supports these
-  assertions, not a requirement for collision-free hashes.
-  [Java 17 Object contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)>)
-- Mutate an input array/list after construction and an exposed collection after retrieval;
-  neither should change an immutable value or bypass root authority. Also inspect contained
-  objects: `List.copyOf` prevents structural changes but does not freeze mutable elements.
-  [Java 17 unmodifiable lists](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#unmodifiable)
-- For entities, distinguish identity from state equality. Two snapshots with the same ID
-  can have different business state; assert mapped fields directly in round-trip tests.
+`Category.update` and `Video.update` assign state without calling validation.
+`Genre.update` and `CastMember.update` assign state and then call
+`selfValidate`. Their exception tests do not prove unchanged in-memory state.
+If investigating a failure path, inspect and characterize the actual state; do
+not impose transactional rollback on those methods or change them silently.
 
-For a pure domain service, supply real entities/values and assert its domain result for
-both accepted and rejected inputs. Do not move use-case transaction, authorization or
-port orchestration tests into that service to make the test easier to construct.
+Use the real handler for the behavior under test:
 
-## Application: outcomes through ports
+- `ThrowsValidationHandler.append(Error)` immediately throws `DomainException`.
+  Test its first error; changing to `Notification` changes how many errors can be
+  observed in one validation pass.
+- `Notification` collects errors and returns them via `getErrors()`;
+  `validate(Validation<T>)` returns the successful result, or records caught errors
+  and returns null. `NotificationException` carries that list when the aggregate's
+  `selfValidate` raises it.
+- Errors contain only `message`. Follow the source tests' exact count and
+  `getErrors().get(i).message()` assertions. Do not invent codes/property paths or
+  use only an exception's existence when the failing rule matters.
 
-In `DefaultSubmitOrderUseCaseTest`, construct the use case directly with appropriate
-controlled ports. Keep domain rules real. A working in-memory gateway is useful for
-state-based assertions; a stub is enough for a single failure response. A fake implements
-behavior with shortcuts and is not a production database, consistent with
-[Fowler's test-double distinction](https://martinfowler.com/bliki/TestDouble.html).
+## Identity, values and copy boundaries
 
-Cover the requested use-case policy:
+Use independently constructed IDs with the same string to test typed identity.
+Concrete IDs compare their class and raw string; `from("123")` appears in
+`GenreTest`. Do not require UUID parsing, case normalization or nonblank checks
+that the selected ID factory does not implement. `Entity` equality compares
+concrete class and ID, so two versions of an aggregate can be equal while their
+business fields differ. Assert those fields directly for copies and updates.
 
-- Successful command produces the contract output and the expected stored root snapshot.
-- Malformed values, missing roots, invalid transitions and forbidden callers fail through
-  the documented result/exception boundary without protected side effects.
-- Tenant/ownership checks cannot be bypassed by guessed IDs or by another supported entry
-  point. Include an adversarial caller from another tenant where the system is multi-tenant.
-- A persistence conflict or port failure does not return success or publish an event
-  claiming a committed transition. Use a controlled failure to test application handling;
-  prove rollback separately against the actual transaction mechanism.
-- If retries/idempotency are promised, a duplicate command has the agreed output and event
-  count, and reuse of its key with a different payload is handled as specified.
+`ImageMediaTest` and `AudioVideoMediaTest` deliberately compare distinct instances
+with different names/generated IDs as equal. `ImageMedia` uses checksum/location;
+`AudioVideoMedia` uses checksum/raw location. Assert equal hash codes for these
+equal values, but inspect media status, ID and encoded location explicitly when
+those are the result of a transition. Do not replace their equality with an
+all-fields record expectation. Their null constructor arguments raise
+`NullPointerException`, not validator notifications.
 
-Assert stored values via a fresh load, external requests via a recording port where
-appropriate, and output fields directly. Avoid requiring `find -> validate -> update -> save`
-as a mock call sequence; legitimate internal refactoring should preserve these outcomes.
-Recorded absence of a protected outbound request is useful failure-path evidence.
+`ValueObject` is an empty base; `Resource` has no equality override and returns
+its stored byte array directly. Do not assert universal value equality, immutable
+array ownership or defensive copying just because a class extends `ValueObject`.
+If the target needs stronger ownership, ask before changing the reference pattern.
 
-## Prevent the fake from hiding the defect
+Separate the source's collection behaviors:
 
-For an explicit-save `OrderGateway`, store immutable snapshots of every relevant root and
-child value. Rehydrate a new aggregate on each read; copy nested mutable data, not merely
-the containing list. Preserve ID, audit data and stored version without generating events.
-Do not share mutable instances with saved arguments, load results or saved return values.
+- `Entity` copies an input event list and exposes an unmodifiable view.
+  `EntityTest` checks the exposed view; a focused input-alias test can additionally
+  mutate the original list and inspect the entity. Neither establishes deep copies
+  of arbitrary event payloads.
+- `Genre.with(Genre)` and `Video.with(Video)` copy their collections of IDs.
+  Their raw-argument constructors retain supplied collections. `Genre.update`
+  and `Video.update` copy association collections. Test the actual overload.
+- `Category.clone()` is a shallow clone, including the inherited event list.
+  Do not assume isolation of every mutable field because a fixture uses it.
 
-Require these contract checks before trusting the fake:
+When a copy is the subject, compare ID, relevant scalar fields, audit values and
+event behavior; ID equality alone would miss lost state. Never use `before = root`
+as a previous-state snapshot.
 
-1. Save draft A. Mutate A without a second save. A fresh read is still draft.
-2. Load B, mutate B, and omit save. Another read is still draft. This catches the false
-   green where a use case never persisted its transition.
-3. Save changed B. A fresh read reflects the change and agrees with the gateway's returned
-   version/output contract; mutating B again does not update the stored snapshot.
-4. When save is configured to fail, the stored snapshot remains unchanged. A fake that
-   writes then throws models a different failure and must say so.
-5. When optimistic conflict behavior is part of the port, two stale snapshots exercise
-   the defined application conflict path. Do not describe this as database race evidence.
+## Local domain events
 
-These checks apply to detached, explicit-save ports. If the application intentionally
-uses managed entities and a unit of work, changing a managed object can be persisted at
-commit without `save()`. The fake must then track transaction-scoped state and expose
-the real commit/rollback contract, or that scenario should use integration tests.
-[Fowler's Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html)
+`VideoTest` verifies that pending video/trailer media produces one
+`VideoMediaCreated` with the root ID, raw file path and an occurrence instant.
+Read `Video.onAudioVideoMediaUpdated` to distinguish the trigger: null, processing
+and completed media do not emit that event. Updating the same pending media again
+can append another event; there is no deduplication policy to assert.
 
-Reuse small shared contract cases for fake and real adapters where their promises overlap;
-run adapter-specific constraints and transactions separately. Do not reproduce an ORM or
-SQL engine inside the fake. A sequential map cannot establish concurrent safety, natural-key
-uniqueness across transactions, constraint timing or durability.
+`Video.with(Video)` retains pending events in a copied list;
+the raw-argument `Video.with(...)` starts without events.
+The source test named `givenValidVideo_whenCallsWith_shouldCreateWithoutEvents`
+only checks nonnull. To establish emptiness in a new test, assert emptiness.
+
+For publication, use the pattern in `EntityTest`: a minimal concrete
+`DummyEntity`/`DummyID`/`DummyEvent` makes the abstract entity testable, and a
+publisher lambda records observed calls. These are small test types and an
+observer, not a mocked domain object or gateway. Assert events recorded before,
+events observed during publication and the buffer after it. A null publisher is
+a no-op; a throwing publisher interrupts iteration before the final clear.
+Do not interpret callback invocation as durable delivery or exactly-once behavior.
+
+## Exceptions, utilities and timing
+
+Test helpers when their behavior is the change or risk, not to create a test per
+method. Evidence is in `exceptions/*`, `utils/*`, `validation/*` and
+`validation/handler/*`:
+
+- `DomainException.with(Error)` exposes the error message; the list overload uses
+  an empty exception message and retains the list. `NotificationException` has its
+  own aggregate message and error list. Assert the relevant channel.
+- `NotFoundException.with(aggregateClass, id)` formats the aggregate name/ID and
+  has an empty error list; its `Error` overload carries one error.
+  `NoStacktraceException` disables writable stack traces; test that only when
+  this exception contract matters. Preserve cause behavior where used.
+- `IdUtils.uuid()` yields lowercase UUID text without hyphens. Check its exposed
+  format if changing it; do not assert a specific random ID or prove uniqueness
+  by sampling a handful.
+- `CollectionUtils.mapTo(null, mapper)` returns null; `nullIfEmpty` returns null
+  for null/empty sets and the same nonempty set. Do not impose copying or replace
+  these null results with empty sets in a test.
+- `InstantUtils.now()` truncates to microseconds. Consecutive calls need not be
+  distinct. `Category.update` uses `Instant.now()` directly, unlike its lifecycle
+  operations. Keep any temporal expectation specific to the method.
+
+The source tests use strict before/after comparisons between immediate operations.
+The user explicitly requires fixed past dates through the existing `with(...)`
+reconstruction for update-time tests. Assert that the update advances beyond that
+old value and preserves creation time; the example reference demonstrates it.
+This test setup is an authorized addition, not a claim that the source tests already
+use it. No sleeps, mocks or new production clock API are needed. For actual no-op
+paths, assert that the supplied timestamp remains unchanged instead.

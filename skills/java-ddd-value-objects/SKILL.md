@@ -1,110 +1,124 @@
 ---
 name: java-ddd-value-objects
-description: >
-  Design and review Java DDD value objects when primitives hide business meaning,
-  factories accept invalid values, equality disagrees with collections, or records expose
-  mutable state. Covers semantic equality, identifiers, immutable composition, explicit
-  normalization, money, units, ranges, and persistence or JSON boundaries within a bounded
-  context. Use for CustomerDocument.of(), OrderID, monetary values, and replacing primitive
-  obsession. Aggregate consistency and use-case orchestration belong to their own skills.
+description: >-
+  Implement and review domain value objects and typed identifiers using the ddd-example
+  domain conventions. Use for ValueObject, Identifier, CategoryID, CastMemberID, GenreID,
+  VideoID, media factories, equality and hashing, resource aliasing, and value-object unit
+  tests. Preserve the reference's per-type construction and normalization rules. Aggregate
+  lifecycle, Gateway implementations, application orchestration and infrastructure are
+  outside this skill.
 ---
 
 # Java DDD Value Objects
 
-## Scope and discovery
+## Authority and scope
 
-Own a business value's meaning, admissible states, equality, and operations. A value object
-has no independent lifecycle identity: replacing it with an equal value preserves the
-business meaning. An entity can be immutable and still have identity. A DTO carries a
-boundary representation; making it a record does not make it a domain value.
+Use the current `C:\git\ddd-example\domain` module as the sole technical reference for
+this domain implementation style. The reference paths and observed contracts are in
+[semantic contracts](references/semantic-contracts.md). If the checkout is elsewhere,
+locate the supplied domain module. When it is unavailable, use the complete bundled
+source snapshot below and identify its recorded revision. If a requested rule is absent
+from that source, ask for the missing evidence. Do not substitute a generic DDD example
+or invent a rule.
+These instructions implement the reference's patterns, including its different choices
+for different classes. They do not authorize modifying the reference repository.
 
-Start with the concept in its bounded context. Read the target's build/toolchain, one nearby
-domain type, factory and validator, callers, tests, and persistence/serialization mapper.
-Find what domain experts call the concept and which differences they consider meaningful.
-An existing class is evidence of a convention, not proof of the correct business rule.
-
-Use java-ddd-aggregates for transitions and invariants involving other aggregate state,
-java-ddd-use-cases for orchestration, and java-ddd-repositories for adapter reconstruction.
-Use java-immutability, java-object-contracts, or java-numeric-types for deeper Java mechanics
-when those are the obstacle. These are optional handoffs; this skill stands on its own.
+Own the `ValueObject`/`Identifier` hierarchy, concrete IDs, media values, their creation,
+equality, hashing, replacements and exposed state. Use java-ddd for the shared domain
+foundation, java-ddd-aggregates for aggregate transitions, java-ddd-repositories for
+Gateway contracts, and java-ddd-testing for the domain test suite. Persistence mappings,
+JSON representation, HTTP, money, document formats and new business policies require
+evidence beyond this module and are outside this implementation recipe.
 
 ## Workflow
 
-1. **Write a short value contract before choosing syntax.** Record the context, valid and
-   invalid examples, equality components, accepted input forms, allowed operations, units,
-   absence policy, and external encoding. Distinguish documented requirements from a
-   proposed model. Do not invent document checksums, tax rounding, or currency policy.
-2. **Choose identity or value semantics.** A customer's document value is distinct from the
-   customer's lifecycle. `OrderID` can itself be a value object identifying an `Order` entity.
-   An address book entry may have identity while an order's shipping address is a snapshot
-   value. If changing a field must preserve the object's identity, inspect the entity model.
-3. **Keep the package and construction recognizable.** Prefer
-   `com.example.domain.<context>.CustomerDocument`, `CustomerDocument.of(raw)`, and `OrderID`
-   when consistent with the repository. Preserve established variants such as
-   `CategoryID.from(raw)`, `CategoryID.unique()`, `ImageMedia.with(...)` and `getValue()`;
-   factory names should distinguish parsing, generation and reconstruction. Keep `final`
-   classes, parameters and immutable
-   fields; use `var` only for obvious local types. Follow the existing nullability baseline;
-   do not add JSpecify, a shared superclass, or a framework solely for one value object.
-4. **Enforce the local invariant on every construction path.** Private construction and a
-   factory work well when the factory expresses policy. Records need validation in their
-   canonical constructor too; callers can bypass a named static factory. Rehydration and
-   JSON mapping must not create an invalid value through an unchecked alternate path.
-   Follow the project's exception/result/notification convention. Collect input failures
-   outside the valid object; do not temporarily publish an invalid instance.
-5. **Implement equality and immutability together.** Compare all semantically relevant
-   components, implement the matching hash, and prevent mutable aliases in constructors,
-   accessors and operations. A class named `ValueObject` proves none of these properties.
-   Operations return a valid replacement and leave their operands unchanged.
-6. **Keep context-dependent rules with their owner.** Format and internal relationships can
-   be local invariants; uniqueness, account balance, stock availability and external validity
-   cannot be proven by a pure factory. Return the value to the aggregate or application flow
-   that has the required state. An identifier parser establishes syntax, not existence or
-   permission to use the identified resource.
-7. **Validate the actual contract.** Run the relevant domain tests, then mapper/database
-   checks when the representation changed. Separate a compiled example from target-project
-   execution and separate both from an evaluated agent behavior claim.
+1. **Read the relevant implementation and tests before selecting a pattern.** Inspect the
+   base types, the nearest concrete type in the same aggregate package, its factories,
+   accessors, equality methods and callers. Record the source revision/local differences.
+   Inspect the target build and tests; do not upgrade Java or add dependencies to fit a
+   preferred example. The reference has a Gradle 7.6 wrapper, JUnit 5.9.2 in its conventions
+   and Java 17 compatibility settings for `buildSrc`; those settings alone do not pin the
+   domain compiler release.
+2. **Make a short contract from that evidence.** Identify the owning package, superclass,
+   fields, factory names, null/empty handling, normalization, equality components and
+   mutable aliases. Distinguish what the source implements from a requested change.
+   Missing business rules remain questions, not generated constraints.
+3. **Preserve the hierarchy and construction API.** `ValueObject` is an empty abstract
+   class. `Identifier` extends it and declares `String getValue()`. Concrete `<Root>ID`
+   classes extend `Identifier`, store a final `String`, have a private constructor,
+   `from(String)` and `unique()`, and live beside their aggregate. They are not records
+   or final classes in the reference. `unique()` delegates through `IdUtils.uuid()`.
+   Do not add a generic ID superclass with equality or a new utility for each aggregate.
+4. **Keep each ID's exact input policy.** Category, CastMember and Genre IDs preserve
+   nonnull input unchanged, including empty strings and spaces. `VideoID.from` calls
+   `toLowerCase()` before construction. None parses a UUID or checks existence. Keep
+   this distinction; do not add trimming, UUID validation, locale changes or case folding
+   to the other IDs under a claim of following the reference.
+5. **Implement the concrete equality and state contract.** IDs compare exact runtime
+   class and value, with `Objects.hash(getValue())`. `ImageMedia` compares checksum and
+   location; `AudioVideoMedia` compares checksum and raw location. Their technical IDs,
+   names and encoding state do not become equality fields. `Resource` has inherited
+   identity equality and exposes its original `byte[]`; `VideoResource` keeps the given
+   resource reference. Do not silently add defensive copies or full-field record equality.
+   If the task requires different semantics, expose that conflict and obtain the missing
+   requirement before changing it.
+6. **Verify useful observable behavior.** Use real objects, JUnit `Assertions`, clear
+   given/when/then tests and `@DisplayName` on every unit test. No mocks, spies, Mockito or
+   Spring context. Test preservation or transformation of values, hash lookup, the actual
+   equivalence relation, immutable media replacement and relevant aliasing. An equality
+   assertion alone cannot prove a media state transition because status is excluded.
 
-## Decisions that must remain explicit
+## Decisions to preserve
 
-| Situation                                                        | Decision and observable check                                                                                                                            |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Two equal values are different instances                         | `equals` is true, hashes match, and a hash collection can find either instance. Do not test identity with `==`.                                          |
-| Raw input includes spaces, punctuation, case or Unicode variants | Accept only specified forms. Normalize only approved equivalent forms; reject illegal characters rather than deleting them until input looks valid.      |
-| A decimal's textual scale differs                                | Decide whether scale is meaningful. Ensure equality, hashing and any ordering implement the same equivalence; currency and units remain part of meaning. |
-| A record contains a list, array or mutable element               | Inspect defensive copies, accessors and element ownership. Generated methods do not prove deep immutability or content-based array equality.             |
-| A VO is used as a sorted key                                     | Define a domain order if one exists and check consistency with equality. Prefer a use-specific comparator to inventing a universal order.                |
-| The same class name appears in two contexts                      | Compare policies, ownership and change cadence. Share only a deliberately governed concept; translate otherwise.                                         |
-| Database or JSON shape differs from the value                    | Map at the adapter boundary and test round trips. Do not let a column, serializer setter or annotation define the business model.                        |
+| Task                                                      | Required distinction                                                                                                                                                      |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add an ID for a new aggregate                             | Use the concrete hierarchy and API above; choose its input behavior only from an approved analogous source or an explicit requirement. Ask if case handling is undecided. |
+| Reconstruct an existing ID                                | `from` accepts non-UUID strings. Preserve the per-type case rule; generation format is not a parsing restriction.                                                         |
+| Reconstruct media                                         | The full `with(...)` overload retains the supplied ID and state; the short overload generates an ID and, for audio/video, starts pending with an empty encoded location.  |
+| Move media to processing/completed                        | Return a replacement preserving the original object's state. Do not invent allowed-transition guards; inspect status and locations explicitly in tests.                   |
+| Replace Resource or VideoResource with a record/deep copy | That changes the reference's identity/aliasing behavior. Record the discrepancy instead of applying the rewrite as a style improvement.                                   |
+| Add a value absent from the reference                     | Inspect the approved nearest pattern, then ask for any missing validation/equality/operation rule. Do not infer currency, range, checksum or document policy.             |
 
-Keep domain values free of Spring, JPA and HTTP concerns in this clean-architecture family.
-Match the target's package structure; do not reorganize a project to reproduce an example.
-Avoid a generic `domain.vo` dumping ground. Put values near their owning context; a shared
-kernel requires shared semantics and coordinated evolution, not matching fields.
+Keep these types in the aggregate's package (`domain.category`, `domain.genre`,
+`domain.castmember`, `domain.video`), with shared bases at `domain` and `IdUtils` at
+`domain.utils`. Use the reference's constructors, names and accessors rather than
+introducing a `domain.vo` layer, Lombok, framework annotations or a fluent builder.
 
-## Conditional depth
+## Conditional references
 
-- Read [semantic contracts](references/semantic-contracts.md) when input normalization,
-  decimal scale/currency, composite values, ranges, units, time or external representations
-  affect correctness. It supplies the policy distinctions and primary-source grounding.
-  Its reference-project section explains how to retain `Identifier` and media conventions
-  without copying mutable aliases or assuming superclass-provided equality.
-- Read [the executable example guide](references/java-example.md) when writing a factory,
-  reviewing an incomplete `equals`/`hashCode`, or checking strict parsing and exact amounts.
-  Inspect its assets before running them; they are illustrative contracts, not production
-  document or financial rules. Compile to a temporary output directory as the guide shows.
+- Read [semantic contracts](references/semantic-contracts.md) when implementing or
+  reviewing an ID, media/resource type or enum lookup. It records exact source evidence,
+  per-type exceptions and contracts a broad immutability rule would otherwise overwrite.
+- Read [executable examples](references/java-example.md) when implementing the ID pattern
+  or writing value-object tests. It explains how to compile the complete production
+  assets with the existing JUnit examples and states their remaining prerequisites.
 
-## Quality gate and output
+The following assets are complete source files from the same domain module at commit
+`8d964ce4106c2299164e28980ae7553e2afbdc92`, not abbreviated snippets. Read only the row
+needed for the task, together with the shared bases or utility it imports. Shared files
+live in java-ddd; this package contains one copy of each of its 12 production types.
 
-Before declaring completion, show that all creation paths reject locally invalid states,
-equivalent values work as collection keys, and external mutation cannot change a value.
-Use adversarial inputs relevant to the model: appended letters in an identifier, leading
-zero loss, Unicode lookalikes, decimal precision loss, mixed currencies, mutable nested
-members, empty/inverted ranges, and incompatible serialized legacy values.
+| When working on                                              | Complete source                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The shared value/identifier hierarchy or generated ID format | [ValueObject](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/ValueObject.java), [Identifier](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Identifier.java), [IdUtils](../java-ddd/assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/utils/IdUtils.java) |
+| Category identifiers                                         | [CategoryID](assets/java/CategoryID.java)                                                                                                                                                                                                                                                                                               |
+| Cast member identifiers and role constants                   | [CastMemberID](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/castmember/CastMemberID.java), [CastMemberType](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/castmember/CastMemberType.java)                                                                                                      |
+| Genre identifiers                                            | [GenreID](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/genre/GenreID.java)                                                                                                                                                                                                                                         |
+| Video identifiers and their case rule                        | [VideoID](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/VideoID.java)                                                                                                                                                                                                                                         |
+| Media construction, equality and encoding replacements       | [AudioVideoMedia](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/AudioVideoMedia.java), [ImageMedia](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/ImageMedia.java), [MediaStatus](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/MediaStatus.java)         |
+| Resource bytes and wrapper ownership                         | [Resource](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/Resource.java), [VideoResource](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/VideoResource.java)                                                                                                                          |
+| Rating labels or media-type lookup                           | [Rating](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/Rating.java), [VideoMediaType](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/video/VideoMediaType.java)                                                                                                                            |
 
-Deliver the value contract, package/class/factory choice, implementation or review findings,
-tests actually run and any unresolved business decision. A small change needs a small report.
-If equality or encoding changes for existing data, identify collisions and compatibility
-impact before migrating it. Unknown legal formats, supported currencies or rounding stages
-remain explicit unknowns; continue work that does not depend on them. A successful pure
-Java fixture proves its exercised rules, not ORM behavior or the target business model.
+If java-ddd is not available beside this skill, locate its matching source assets or use
+the supplied domain checkout for those imports. The optional suggestion does not install
+the shared files automatically. Keep the packages and signatures when assembling the
+sources; do not compile an asset and the checkout's duplicate class together.
+
+## Completion
+
+Show the chosen reference type/path, implementation or concrete findings, tests actually
+run and any unresolved rule. Confirm constructor/factory compatibility, per-type input
+handling, matching equality/hash behavior and the actual ownership of mutable state.
+Do not report `Resource` as deeply immutable or every subclass of `ValueObject` as
+having structural equality. Source compatibility checks and executed domain tests do
+not establish that an agent using the skill will make every intended decision.

@@ -72,19 +72,14 @@ Preserve an intentional legacy coercion contract; changing accepted inputs needs
 decision. Unknown-property handling is a separate choice, including how supplied server fields
 are rejected or ignored; schema `additionalProperties` must agree with that choice.
 
-When the project or a user-supplied reference separates API interfaces, controllers, use cases
-and presenters, preserve those responsibilities. An API interface can own mappings/OpenAPI;
-the controller translates input and delegates to an explicitly named use case such as
-`CreateCompanyUseCase`. Trace `CreateCompanyRequest` to an application command, then map the
-application output through the presenter to `CompanyResponse`, returned as
-`ResponseEntity<CompanyResponse>`. Request and command have different owners, as do output
-and response; do not expose an application output merely because it currently serializes.
-Keep HTTP status/headers and public field selection at the API edge. Name operations for
-their intent (`createCompany`, `listCompanies`, `getById`) using the established vocabulary.
-Preserve purposeful interface/presenter organization without inventing those abstractions
-for every small endpoint. A reference establishes design intent, not permission to copy its
-wildcard response types, unbounded sorting/paging or translation of arbitrary technical
-failures into business errors; reconcile it with the actual requested contract.
+In the Customer reference, `CustomerApi` owns mappings, validation and documentation;
+`CustomerRestController` implements that contract and delegates to `CustomerService`.
+Trace its request conversions and `CustomerDetails` output through the actual DTO mapping
+methods, returning `WebAsyncTask<ResponseEntity<ConcreteDto>>`. Keep status, headers and
+public field selection at the HTTP edge. Reproduce this organization when applying the
+documentation pattern. If the target has separately established use cases or presenters,
+retain those application responsibilities while adopting the interface/DTO/documentation
+separation; the supporting Customer service is not a mandate to replace its architecture.
 
 For partial updates, define absent, explicit null, empty string/collection and invalid value
 separately. Choose an existing presence wrapper, patch document, dedicated DTO or explicit
@@ -103,13 +98,18 @@ a snapshot across concurrent inserts/deletes; state that consistency choice expl
 
 ## Validation and errors
 
+When following Customer, reproduce the [verified handler separation](customer-pattern.md#separate-four-parts-of-the-error-contract)
+and read the complete handlers through the [source index](customer-source-index.md).
+The broader alternatives below apply only to a different established contract.
+
 Choose the smallest error policy that satisfies the API. For standard MVC Problem Details,
 Boot's `spring.mvc.problemdetails.enabled=true` supplies the framework exception handling;
 it does not require a custom advice just to reproduce those responses. A promised `violations`
 array, stable domain codes or a legacy envelope justifies narrow application handling. Reuse
-an existing advice before creating another one. The fixture extends `ResponseEntityExceptionHandler`
-because its consumers need the documented violations extension and safe unexpected-error policy.
-It is an example of that conditional contract, not the minimum configuration for a controller.
+an existing advice before creating another one. Customer's `GlobalExceptionHandler` extends
+`ResponseEntityExceptionHandler` for its `errors` extension, consistent standard problem
+descriptions, framework metadata and safe unexpected-error policy. Preserve that implementation
+when applying this reference; its controller-specific business advice has a separate role.
 
 Use Jakarta Bean Validation for constraints expressible on the transport model and validate
 nested structures explicitly. Verify method validation selection: class `@Validated` uses
@@ -117,7 +117,11 @@ AOP; built-in MVC method validation introduced in Framework 6.1 uses another pat
 on signature, handle argument and method validation exceptions. A class-level annotation is
 not a universal prerequisite for validating a request body.
 
-Define canonicalization and semantic validity together. If an identifier accepts presentation
+Preserve the reference's actual canonicalization: Customer's domain CPF normalization removes
+non-digits and then validates the result, while create/PUT first apply a narrower DTO pattern.
+PATCH follows the tree mapper and domain checks. Do not replace that behavior with a new policy
+as part of documentation. For a new identifier contract, define canonicalization and semantic
+validity together. If an identifier accepts presentation
 punctuation, normalize only those agreed forms and use the same canonical key for lookup,
 uniqueness and writes. Do not remove arbitrary characters until an invalid value becomes
 valid. Keep domain invariants on the application/domain path for non-HTTP callers too.
@@ -150,7 +154,7 @@ nested indices where meaningful; do not echo private map keys. A documented `req
 fallback is appropriate only where the consumer permits global errors, not as a substitute
 for required field locations. Test aliases/naming strategies with the actual mapper when
 present. Custom deserializers and unwrapped/polymorphic values need their own public mapping.
-The fixture's Java/JSON names and query parameter names intentionally match; its simple
+Customer's Java/JSON names and query parameter names match; its
 advice relies on that verified condition and must be adapted if the public names change.
 
 ProblemDetail can carry standard fields and controlled extensions. When extending it, test
@@ -176,7 +180,13 @@ documented requirements. Its result should be a compatible tested policy, not an
 
 ### Global and specific exception handlers
 
-When several business failures share a code/context contract, use a small `BusinessException`
+The exact reference has two independent `RuntimeException` subclasses:
+`CustomerNotFoundException` in application and `InvalidCustomerException` in domain.
+Read them and `CustomerExceptionHandler` before adapting the pattern. Do not introduce a
+`BaseException`, a code/context map or a new inheritance hierarchy absent from the source.
+
+For another project where several business failures already share a code/context contract,
+retain its small `BusinessException`
 or `BaseException` extending `RuntimeException`, with specific subclasses carrying immutable
 typed context. For example, `CompanyNotFoundException(UUID companyId)` retains the requested
 ID and identifies it in a useful diagnostic message; a no-argument exception saying only
@@ -190,8 +200,9 @@ wording. Keep diagnostic context distinct from public detail: do not serialize e
 blindly return `getMessage()`, or reveal secrets, SQL, causes or cross-tenant existence.
 Expose the requested identifier only when the caller's visibility contract allows it; an
 authorized missing-resource URI can already identify it through ProblemDetail `instance`.
-The fixture retains product ID/SKU on typed exceptions and publishes only its known code
-and safe message. Test both exception context and the HTTP representation.
+Customer publishes its known business message with a feature-specific problem type through
+the scoped handler. The global fallback sanitizes arbitrary failures. Test those distinct
+paths and keep context fields faithful to the source exceptions.
 
 Use one shared global `@RestControllerAdvice` (for example, `GlobalExceptionHandler`) for
 the common MVC/validation representation and a sanitized unexpected-failure fallback.
@@ -203,8 +214,9 @@ Do not require a handler class for every controller or copy validation/catch-all
 
 Local exception handlers run before advice. Among applicable advice beans, the first matching
 advice in priority order wins: a higher-priority catch-all can mask a lower-priority specific
-handler. Keep the global fallback at explicit low priority (for example,
-`@Order(Ordered.LOWEST_PRECEDENCE)`) when combining advices, with narrower advice ahead of it.
+handler. Customer puts `@Order(Ordered.HIGHEST_PRECEDENCE)` on its scoped business advice;
+the global advice has no explicit order annotation. Preserve this arrangement and verify it
+with `ExceptionHandlersTests`; do not add a low-priority annotation just to resemble another sample.
 Specificity, including root-versus-cause matching, is resolved within each controller/advice;
 it does not override advice order. Test wrapped exceptions too if that is how the application
 actually propagates them. These rules concern MVC; security/filter failures keep their owners.
@@ -215,16 +227,17 @@ handlers, or explicitly integrate with that same policy; converting them to the 
 fallback prevents the filter chain from translating them. Advice priority alone does not solve
 this boundary. Pass the actual advice/chain configuration to `spring-security-for-apis` and test
 method-level denials as well as pre-dispatch denials, including status, challenge headers and
-absence of side effects. The public fixture has no such security exceptions to handle.
+absence of side effects. The Customer reference has no security chain or such security exceptions to handle.
 
 All handlers must honor the common public envelope, media type and safe metadata. A local
 409 for a known conflict must not expose exception messages/SQL or turn other failures into 409. Verify local and scoped handlers win where intended, fall through elsewhere, and leave
-framework errors and the sanitized 500 policy intact. The fixture's test-only probes exercise
-these ownership choices without adding fake business errors to its production operations.
+framework errors and the sanitized 500 policy intact. Customer's MVC tests exercise its real
+scoped business advice and global fallback, with repository fault injection. Its unannotated
+test-only documentation probe verifies automatic error documentation coverage.
 
 Choose inheritance by responsibility: ordinary business-only or controller-specific advice
 does not need `ResponseEntityExceptionHandler`. Boot's default Problem Details can own
-framework errors when adequate. The fixture extends the framework base because it customizes
+framework errors when adequate. Customer's global handler extends the framework base because it customizes
 argument/method validation and type-mismatch responses; it does not reimplement the entire
 resolver. Use that base when the shared advice needs these MVC hooks, then
 override the specific hooks that need different representation, retaining framework status,
@@ -249,9 +262,10 @@ server defect. A catch-all that returns success or converts every exception to 4
 Document common owned errors once in components.responses and add references through a
 global customizer with put-if-absent semantics. Register their schema components independently
 of incidental controller references. Keep meaningful per-operation examples and media types;
-do not add fictitious 401/403 to an intentionally public fixture. Check interaction with
-springdoc's automatic advice-response inference; the fixture disables that inference because
-its explicitly tested customizer owns the common policy. This does not establish that every
+retain Customer's full conditional service-wide catalog, including 401/403, with its explanatory
+conditions. This does not imply a configured security chain. Check interaction with
+springdoc's automatic advice-response inference; Customer disables that inference because
+its tested customizer owns the common documentation policy. This does not establish that every
 filter, container or committed-stream failure uses the same envelope.
 
 ## Filters, browser behavior and async lifecycles

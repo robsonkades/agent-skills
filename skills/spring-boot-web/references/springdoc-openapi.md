@@ -7,6 +7,12 @@ Completeness means the documented contract
 matches every in-scope public operation and property, including optional information and
 applicable advanced features. It does not mean decorating a method with every annotation.
 
+For work following `C:\git\customer`, use [its implementation pattern](customer-pattern.md),
+[complete source index](customer-source-index.md) and [operation/property matrix](customer-coverage.md)
+as the technical authority. The packaged sources cover every current production class and
+test, not a synthetic substitute. Framework references explain mechanisms without replacing
+the repository's chosen organization or business semantics.
+
 ## Compatibility and ownership
 
 OpenAPI defines a language-neutral contract; Swagger Core supplies Java annotations/models;
@@ -25,11 +31,17 @@ Inspect the emitted `openapi` value and consumer support. springdoc exposes
 schema uses JSON Schema semantics including null, while 3.0 has different schema vocabulary.
 Do not put an unsupported keyword into a document and infer support from UI rendering.
 
-Use existing annotation placement, controller interfaces or programmatic models when they
-are maintainable. Do not create a second controller interface solely to move annotations.
+Following the Customer pattern means placing mappings, validation and OpenAPI metadata on
+the API interface, with delegation in its concrete controller. Reuse the existing interface;
+do not duplicate its annotations on overrides. For an unrelated contract-first/REST Docs
+task, preserve its established ownership rather than introducing this layout implicitly.
 Prefer generated type information when correct, adding semantic description and explicit
 overrides where inference cannot express the contract. Documentation must not invent runtime
 validation, defaults, supported formats, authentication or error conditions.
+
+For interfaces, composed annotations, async wrappers and programmatic fixes, use
+[integration and customization](springdoc-customization.md). Those mechanisms must preserve
+the same public contract; moving annotations or adding a customizer is not coverage by itself.
 
 ## Inventory before annotation
 
@@ -48,6 +60,27 @@ fields or Bean Validation constraints. Include optional fields and error extensi
 For each operation/property record actual semantics, documentation location and verification
 status. A compact table or existing API governance tool is sufficient. Use this inventory
 to detect omissions and contract drift; do not turn it into unrelated persistent paperwork.
+
+For an API-wide task, make coverage auditable with these two views, in the project's existing
+report/test format. Populate them from the application, then compare the generated document;
+using OpenAPI as both inventory and result cannot discover an omitted handler or property.
+
+| Inventory row               | Minimum information                                                                                                                                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Operation and variant       | Handler/interface; method/path; consumes/produces and mapping conditions; published groups; operationId; parameters/body; successes/errors/headers; security; example/test; unresolved gap                                      |
+| Public property and variant | Operation and input/output/error direction; JSON path including array items/map values; owning schema or composition branch; presence/null/default; constraints and normalization; description/example; source and verification |
+
+One OpenAPI Path Item has one operation per HTTP method. Multiple Java handlers selected by
+headers, parameters or content type may collapse into it. Check that every accepted variant
+survives as the appropriate parameters, content entries, schemas and conditional descriptions;
+do not equate handler count with operation count or silently discard an overload.
+
+Trace public contracts through converters, validators, constructors, patch mappers, use cases,
+domain checks and exception translators. A documentation-only DTO for a `JsonNode` body is
+not the runtime validator. A supplied repository is evidence for its current revision, not
+universal policy: record the chosen working-tree state when local changes matter, and preserve
+its actual behavior while reporting contradictions. Ask only about unresolved decisions that
+change the consumer contract, such as intended PATCH semantics or an unknown public server.
 
 ## Review every applicable feature family
 
@@ -69,6 +102,11 @@ Supply `@Operation`, `@Parameter`, `@Schema`/`@ArraySchema`, `@ApiResponse`, `@H
 `@Content`, `@ExampleObject` or equivalent programmatic structures as appropriate. The
 criterion is faithful information in the generated contract, not one prescribed placement.
 
+For each family record applicable, not applicable with evidence, or unresolved. Unsupported
+tooling is a verification gap, not proof that the feature is irrelevant. Search for actual
+security, upload, streaming and outbound HTTP contracts before classifying them as absent.
+Do not fabricate contact details, quotas, OAuth providers or webhook behavior to fill a table.
+
 Document all known applicable status paths, including malformed input, missing resources,
 known state conflicts, validation and security rejection. A `default` response can describe
 an actual fallback but cannot replace specific known behavior. Inspect response inference
@@ -80,6 +118,37 @@ response for the same status can merge or override information unexpectedly. Kee
 operation error examples where their semantics differ and test that they survive generation.
 For ProblemDetail, inspect actual omission/default rules too; do not make the default
 `about:blank` type mandatory if the configured mapper omits it.
+
+Separate the reusable error catalog from errors established for an operation. A component
+describing 401, 429 or 502 does not prove authentication, rate limiting or an upstream exists.
+If the project deliberately publishes a conditional service-wide catalog, retain that policy
+with explicit conditions and distinguish it from exercised behavior; do not install the
+missing infrastructure or claim every listed status was observed. When adding documentation,
+attach only applicable responses unless such a catalog is an established requirement. Shared
+response merging and flattened Problem Details need the
+[customization rules](springdoc-customization.md#shared-errors-without-losing-specific-contracts).
+
+## Consumer workflows, pagination and links
+
+Describe enough behavior to compose calls: creation and Location, retrieval of the created
+identifier, replacement versus partial update, filtering, ordering and empty results. For a
+search API, document filter combination (AND/OR), supported operators and wire values,
+case/whitespace handling, date inclusivity, repeated criteria and invalid combinations. Query
+filters and JSON search filters can have different defaults and accepted representations.
+
+Document page/cursor origin, default/maximum size, sort allowlist, priority and tie-breaker,
+total-count meaning, empty and out-of-range pages, and consistency under concurrent changes
+when known. A nullable list, an empty list and a list containing null are separate contracts.
+Verify the actual defaults after binding/constructor normalization, not just annotation text.
+
+When an operation relationship helps the consumer, an OpenAPI response `Link` can target
+an existing operation with `operationId` or `operationRef`, never both. For example,
+`$response.body#/id` can supply the created ID to a retrieval path parameter. Verify unique
+target resolution, the target's parameter name/location and the expression against a real
+response in every published group. A group can exclude the target while retaining the link;
+fix that group's relationship deliberately instead of publishing a dangling operationId.
+Follow Location separately: a Link is metadata and does not create a response header,
+authorize a call, embed hypermedia in the payload or make Swagger UI execute a workflow.
 
 ## Security logic is contract logic
 
@@ -109,12 +178,18 @@ publication choices; see [UI and publication](swagger-ui.md).
 2. Compare path/method sets and variant content against the MVC inventory. Recursively compare
    public property sets and meaning against input/output serialization. Check operation IDs,
    media types, response statuses, security logic, required/null/direction and references.
+   Check missing and extra entries in both directions, after explicit framework/test-only
+   exclusions. Report operation and property gaps separately; a total endpoint count hides
+   an undocumented nested field or an impossible composition branch.
 3. Use a version-compatible OpenAPI validator for document semantics and a compatible schema
    validator for examples. Existing tooling is preferable; a JSON parser only proves syntax.
    A selected assertion suite has a named coverage limit and is not a universal validator.
 4. Execute minimum-valid and all-optionals request examples, representative variants, and
    negative cases against an isolated server. Compare status/headers/body to the contract.
    Validate response examples too; do not label an invalid request a normal valid example.
+   Exercise every polymorphic branch, omission/null/default states, conditional combinations,
+   empty/out-of-range pages and applicable boundary violations. Compare normalized responses
+   after each write path; passing creation tests does not establish PATCH or output constraints.
 5. When a UI is delivered, exercise its groups, descriptions, examples, schemas, authentication, and
    actual Try it out requests behind the intended context/proxy. Separate UI limitations
    from invalid specifications and runtime mismatches.
@@ -132,4 +207,5 @@ Primary sources: [springdoc integration, groups and FAQ](https://springdoc.org/)
 [springdoc properties](https://springdoc.org/properties.html),
 [springdoc 3.1.1 dependency parent](https://repo.maven.apache.org/maven2/org/springdoc/springdoc-openapi/3.1.1/springdoc-openapi-3.1.1.pom),
 [OpenAPI 3.1.1 specification](https://spec.openapis.org/oas/v3.1.1.html),
+[OpenAPI operation links](https://spec.openapis.org/oas/v3.1.1.html#link-object),
 [Swagger annotation APIs](https://docs.swagger.io/swagger-core/v2.2.55/apidocs/).

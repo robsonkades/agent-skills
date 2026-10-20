@@ -1,203 +1,132 @@
 ---
 name: java-ddd-use-cases
 description: >-
-  Implement or review Java DDD application use cases when commands, aggregate
-  orchestration, authorization and commit outcomes are mixed. Preserve action-based
-  packages, UseCase/DefaultUseCase contracts and framework-independent commands and
-  outputs; distinguish creation, absence, concurrency and replay. Excludes deciding
-  whether a service layer is needed, strategic context design and Spring or ORM
-  configuration mechanics.
+  Implement or review Java application actions using the catalog reference's
+  category, cast-member, genre, video and media use cases. Use for command/output
+  records, Default implementations, validation and exception differences, gateway
+  sequencing, media cleanup and Mockito unit tests. Preserves the reference's
+  behavior; excludes domain implementation, infrastructure, authorization and
+  transaction protocols absent from that source.
 ---
 
 # Java DDD Use Cases
 
-Implement one business action as a framework-independent application operation.
-The use case obtains facts, checks the actor's authority, invokes domain behavior
-and coordinates the required outcome. It must not become the only place that knows
-what makes an aggregate valid. Its callers may be HTTP, a message consumer, a job
-or another local adapter.
+Implement or review one application action using the actual catalog application's
+contracts. The technical authority is `C:/git/ddd-example/application`, revision
+`8d964ce4106c2299164e28980ae7553e2afbdc92`. The packaged source templates preserve
+that snapshot for use without the original checkout. Read domain collaborators
+only to understand the calls; this skill does not authorize changing domain or
+infrastructure implementation.
 
-Use this skill once a domain model and an application boundary are intended. For
-deciding whether that boundary is warranted, use `service-layer-design`. For an
-architectural migration or source-dependency repair across layers, use
-`spring-boot-clean-architecture`. Neither DDD nor this skill requires CQRS,
-microservices, a command bus or one interface per class.
+Use [service-layer-design](../service-layer-design/SKILL.md) for the application package map, responsibility boundary
+and the three independent base types. This skill owns the 23 concrete actions,
+their commands, outputs, collaboration order and tests. Do not add a command bus,
+transaction wrapper, actor/tenant context, authorization policy, outbox, retries or
+idempotency protocol as if they were demonstrated by this application.
 
-## Establish the action and existing conventions
+## Choose the action before copying a pattern
 
-Trace one actual action from entrypoint to commit, including failure mapping and
-non-HTTP callers. Inspect the build's Java release/toolchain, modules, a neighboring
-use case, domain port, composition root and tests. Record the business precondition,
-trusted actor and tenant, returned outcome and resources that must commit together.
-Identify whether success means committed state or durable acceptance for later work.
+1. Inspect the target build, application package, relevant domain gateway and
+   existing tests. The source uses Gradle 7.6, records, the cast-member sealed
+   hierarchy and Vavr 0.10.4. Its `buildSrc` targets Java 17; the shared convention
+   does not pin the application compiler release. These assets use Java 17 syntax
+   without preview features. Preserve the target toolchain and dependencies; do not
+   upgrade them to fit an example. See the precise prerequisites in
+   [testing and source fidelity](references/testing-and-source.md).
+2. Select the matching action in [action contracts](references/action-contracts.md).
+   Read that action's complete source directory, including its abstract contract,
+   `Default...` implementation and any command/output records. The table routes all
+   23 actions; no synthetic order example substitutes for their distinct behavior.
+3. Preserve the chosen family's public signatures, factory overloads, messages,
+   constructor guards and sequence. All five cast-member contracts are sealed and
+   their defaults non-sealed. Category, genre and video contracts/defaults are
+   ordinary abstract/concrete classes. Do not generalize either modifier policy.
+4. Implement only the requested application slice. Reuse existing domain types and
+   gateways. Map inputs and outputs in the application without Spring, HTTP, JPA or
+   Spring Data types. For a new business action, distinguish the selected reference
+   shape from requirements still missing. Ask only when a consequential decision
+   cannot be resolved from the task and target; do not invent new invariants or
+   error semantics.
+5. Run the relevant application tests and inspect the result and meaningful forbidden
+   side effects. Read [testing and source fidelity](references/testing-and-source.md)
+   before adapting the executable test assets. State checks actually run and limits
+   of unit-test evidence.
 
-In this architectural family, the naming shape is:
+## Preserve the differences that affect callers
 
-```text
-application/UseCase.java
-application/order/submit/SubmitOrderUseCase.java
-application/order/submit/DefaultSubmitOrderUseCase.java
-application/order/submit/SubmitOrderCommand.java
-application/order/submit/SubmitOrderOutput.java
-domain/order/Order.java
-domain/order/OrderGateway.java
-```
+- Category create/update return `Either<Notification, Output>` for validation and
+  failures captured by `Try` around the gateway write. Missing category on update
+  still throws `NotFoundException`; lookup failures are outside that `Try`.
+- Cast-member and genre create/update accumulate validation with `Notification`
+  and throw `NotificationException`; their gateway writes propagate failures.
+  Genre verifies category IDs before persistence. Keep the source's size-based
+  comparison and its limitations visible rather than claiming stronger validation.
+- Video create/update validate associations and the domain object before storage.
+  Their media helper catches `Throwable`; creation attempts `clearResources`,
+  update does not. Failure is not proof of database or in-memory rollback.
+- Get actions map absence to `NotFoundException`. Delete actions delegate without a
+  preflight lookup. List actions pass the domain query through and map the returned
+  `Pagination`; empty pages remain successful results.
+- Records do not add validation or copying beyond their actual factory bodies.
+  Null collections, boxed video fields, raw resource bytes and omitted media have
+  observable consequences. Preserve the documented behavior when fidelity is the
+  task; identify an anomaly separately before changing its contract.
 
-`order` represents the existing context/package vocabulary, not proof of a bounded
-context. The inspected catalog reference uses `application.category.create`,
-`application.castmember.create` and `application.category.retrieve.list`, with
-`<Action>Command.with(...)` and `<Action>Output.from(...)`. The installed foundation
-also illustrates `<Action>CommandOutput`; preserve the target's established suffix.
-Retain its `application.<context>.<action>` arrangement; do not
-move unrelated packages to manufacture conformance. The family uses `execute(command)`,
-constructor injection, final dependencies and final method/constructor parameters.
-Inspect existing nullability annotations, validation and errors before choosing
-equivalents. Do not add JSpecify or another dependency solely for an example.
+For video create/update/delete, downloads, uploads or encoding-status commands,
+read [video and media lifecycle](references/video-and-media.md) before editing.
+In particular, omitted resources in a full video update clear existing media;
+upload changes only its selected slot. A matching `PENDING` status still persists
+the video, while an unmatched resource ID does not.
 
-The conventional contract can be `sealed abstract SubmitOrderUseCase extends
-UseCase<SubmitOrderCommand, SubmitOrderOutput> permits DefaultSubmitOrderUseCase`.
-Preserve an observed `sealed`/`non-sealed`/`final` policy; retain a suitable plain
-interface or concrete class when that is the project's existing boundary. Before
-changing modifiers, inspect proxying, decorators and test substitution. A sealed
-contract does not permit arbitrary direct decorators; a final implementation cannot
-be subclassed. Naming consistency is not a reason to build a new inheritance tree.
-The reference's cast-member operations use sealed contracts with non-sealed defaults;
-its category operations use plain abstract contracts and implementations. It also
-has `UnitUseCase<IN>` for no output and `NullaryUseCase<OUT>` for no input. Reuse these
-only when the operation actually needs them; do not invent dummy commands/results.
-The worked example uses Java 17 syntax without preview features; this is an example
-baseline, not an instruction to upgrade the target.
+## Source assets and tests
 
-Separate verified project facts from this family's reference conventions. Inspect
-the target itself before generalizing from a reference example. Missing business rules are not
-permission to invent creation, authorization or commit semantics. Continue the
-work whose requirements are known; clarify only consequential gaps.
+The required service-layer-design package (`^1.3.0`) supplies these complete sources.
+Read the matching base before adapting an action and the test support before using
+the source tests. Reuse compatible types already in the target instead of duplicating
+them. The three production bases are independent abstract classes; none extends another.
 
-## Design the operation's contract
+| Complete source                                                                                                                                | Contract and use                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [UseCase.java](../service-layer-design/assets/application/src/main/java/com/robsonkades/admin/catalogo/application/UseCase.java)               | `UseCase<IN, OUT>` declares `OUT execute(IN anIn)`                                                                                                                                        |
+| [UnitUseCase.java](../service-layer-design/assets/application/src/main/java/com/robsonkades/admin/catalogo/application/UnitUseCase.java)       | `UnitUseCase<IN>` declares `void execute(IN anIn)`                                                                                                                                        |
+| [NullaryUseCase.java](../service-layer-design/assets/application/src/main/java/com/robsonkades/admin/catalogo/application/NullaryUseCase.java) | `NullaryUseCase<OUT>` declares `OUT execute()`; none of the 23 reference actions extends it                                                                                               |
+| [UseCaseTest.java](../service-layer-design/assets/application/src/test/java/com/robsonkades/admin/catalogo/application/UseCaseTest.java)       | Shared application test support: Mockito extension, unit-test tag and identifier helpers; preserve the callback caveat in [testing and source fidelity](references/testing-and-source.md) |
 
-1. **Name the intent and its failure cases.** `SubmitOrder` and `CreateOrder` express
-   different actions. An absent order during submission is an absence outcome;
-   `orElseGet(Order::create)` silently changes the business operation. Introduce
-   create-or-submit only when the domain contract explicitly requires it, including
-   identity allocation and race behavior.
-2. **Keep inner contracts independent.** Commands carry use-case inputs; output
-   records describe the result. They do not carry HTTP requests, Spring Security
-   principals, JPA entities, lazy proxies or Spring Data pagination types. Map those
-   outside the core. Reuse an existing DTO if its vocabulary, ownership and change
-   contract match; do not duplicate it merely to have two class names. Domain value
-   objects can be input types when local callers can honor that contract; otherwise
-   parse them at the application boundary.
-3. **Separate three kinds of decisions.** Protocol validation belongs at the
-   transport boundary; application decisions control access and sequencing for this
-   action; invariants and business state transitions belong to the domain. An
-   aggregate's `submit()` checks whether submission is legal, regardless of caller.
-   The use case must not calculate a new status and bypass behavior through setters.
-   Business authorization rules may live in a domain policy; application orchestration
-   obtains the trusted facts and ensures that policy is invoked.
-4. **Choose explicit absence and failure semantics.** Use the project's typed result
-   or typed exception convention. Expected rejections can be results, while existing
-   typed exceptions can also be a deliberate boundary contract. Do not use `null`,
-   `Optional.empty()` or a generic catch to conflate absence, denial, conflict and
-   infrastructure failure. Preserve externally promised non-disclosure of resource
-   existence. HTTP status mapping belongs to the adapter.
-   The reference uses `Either<Notification, Output>` for categories and exceptions
-   for cast members; neither is a universal rule. Preserve applicable semantics and
-   do not copy a broad persistence-exception catch into a domain-validation result.
-5. **Keep invocation state local.** A shared use-case instance must not retain the
-   current command, actor, tenant or loaded aggregate in fields. Immutable commands
-   need defensive copies for mutable members; `record` alone is only shallowly
-   immutable. Outputs must not expose mutable aggregate state.
+The [production asset root](assets/application/src/main/java/com/robsonkades/admin/catalogo/application/)
+contains all 75 action source files, unchanged from the reference. Use the action
+table to load only the requested package. Do not copy all actions into a target
+merely because the complete templates are available.
 
-When implementing or reviewing these class contracts, read the
-[submission slice](references/submission-slice.md). It explains absence, a trusted
-actor source, a domain-owned gateway and the distinction between an output and a
-durable result.
+The [test asset root](assets/application/src/test/java/com/robsonkades/admin/catalogo/application/)
+contains the 23 source test classes, with six supplemental cases in their matching
+action suites. Use the matching action test when implementing or reviewing it;
+the [supplemental case routes](references/testing-and-source.md) identify tests for
+collection checks, resource replacement, cleanup, media status and byte-array
+ownership. Combine the selected tests with the shared `UseCaseTest` linked above.
 
-## Orchestrate without losing the business guarantee
+Application tests retain Mockito for gateway collaborators and use real aggregates,
+identifiers, notifications and media objects. The user requires a descriptive
+`@DisplayName` on **every applied unit-test method**; catalog examples use English.
+The original source did not have these annotations. For strict timestamp comparisons,
+reconstruct the starting aggregate with fixed historical dates through its real `with(...)` factory. Keep
+the comparison; do not sleep, mock clocks or change production time behavior.
+Keep tests simple and focused on observable outcomes.
 
-Use a domain-owned `OrderGateway` for aggregate persistence in this family. An
-application service may call a domain repository port named `OrderRepository` in a
-project that uses that vocabulary; the prohibited dependency is the infrastructure
-implementation or Spring Data interface. A change of noun establishes no boundary.
+Use the target project's existing domain for application work. For a missing reference
+declaration such as `AggregateRoot`, or an offline reference replay, the optional
+java-ddd package (`^1.2.0`) and its required specialists provide the
+[complete domain source index](../java-ddd/references/source-index.md). This skill
+suggests that bundle; it does not install it automatically. The optional
+java-ddd-testing package (`^1.2.0`, also required by that hub) supplies the exact
+[UnitTest.java](../java-ddd-testing/assets/domain/src/test/java/com/robsonkades/admin/catalogo/domain/UnitTest.java)
+and [Fixture.java](../java-ddd-testing/assets/domain/src/test/java/com/robsonkades/admin/catalogo/domain/Fixture.java)
+sources. Before replaying tests without the original checkout, make those packages
+available and follow the build prerequisites in [testing and source fidelity](references/testing-and-source.md).
+The domain-only no-mock policy does not remove Mockito from these application tests.
+Infrastructure wiring, transaction proof and external
+resource guarantees require separately requested evidence and work.
 
-Obtain identity from a trusted adapter/context, never from the request's claimed
-roles or tenant ownership. Enforce tenant scope on access and persistence, and
-resource-level permission before mutation. Jobs and consumers need an explicit
-service actor and scope; bypassing HTTP must not bypass application policy. If
-authorization depends on mutable facts, include them in the relevant consistency
-contract instead of trusting a stale preflight check.
-
-Define the business unit of work first. Compose its transaction outside pure domain
-and application code, with no Spring/JPA/HTTP imports in either. The outer wrapper
-must enclose all required writes, expose success only after commit, and be the path
-used by every relevant caller. An annotation, an invoked `save`, or a returned record
-does not prove a transaction committed. A wrapper joining an existing transaction
-cannot promise durability before that transaction completes. If returning a failure
-value after writes, ensure those writes cannot accidentally commit. Distinguish
-confirmed rollback, uncertain completion and failure after a successful commit;
-an exception alone does not establish that the business change was undone.
-
-Require storage-enforced conflict detection when two submissions can race; a read
-followed by an in-memory version comparison is insufficient. A conflict is not
-permission to blindly repeat a stale user's intent. If retries or duplicate delivery
-are in scope, bind the operation identity to actor/tenant, action and request
-semantics, then coordinate the deduplication record with the business change.
-Idempotency does not replace the invariant or concurrency control.
-
-For repeated requests, multi-write operations, events or transaction wrapper changes,
-read [atomic outcomes and failure cases](references/atomic-outcomes.md). Do not
-claim a local transaction covers remote calls. Preserve an explicit outcome for
-commit success followed by response loss or publication failure.
-
-For a read-only query, use an application-owned projection port when it answers the
-question directly. It need not hydrate an aggregate or introduce a command bus.
-Specify access scope, ordering, paging and acceptable staleness; a projection's
-earlier answer cannot authorize a later invariant-sensitive write. Avoid recursively
-calling public use cases to share a few lines: extract the appropriate domain policy
-or internal application collaborator, keeping one explicit authorization and
-transaction boundary for the composed action.
-
-## Complete the slice and verify the claim
-
-Implement the operation, its domain call, port contract, outer wiring, caller mapping
-and affected tests as one slice. Preserve compatible serialized fields and public
-errors unless the requested change includes them. Do not add adapters or a global
-refactor to satisfy an illustrative package tree.
-
-Select checks that discriminate the actual risk:
-
-- Domain tests prove rejection leaves a valid state; application tests prove absence,
-  denial and conflict do not become create/save success, and each caller supplies
-  trusted context. Include a foreign-tenant identifier and forged identity payload
-  when changing access enforcement.
-- Application tests use domain objects and controlled ports without starting Spring.
-  They assert outcomes and meaningful forbidden side effects, not every incidental
-  call order. Fakes must not leak live aggregate references that persist mutations
-  before `save` succeeds.
-- Composition/integration tests exercise the real caller-to-wrapper path, rollback,
-  deferred commit failure and concurrent writes for affected guarantees. A mock
-  gateway cannot prove transaction interception or database isolation.
-- Boundary checks cover production imports and signature types, select nonempty
-  packages and detect a known forbidden dependency. Package names alone are no proof.
-
-For model boundaries, optionally use `java-ddd-aggregates` and
-`java-ddd-value-objects`; use `java-ddd-domain-services` for a policy that fits no
-entity/value object. `java-ddd-repositories` owns persistence contracts,
-`java-ddd-domain-events` owns event meaning and lifecycle, and `java-ddd-testing`
-owns broader test design. For an uncertain context boundary, return to `java-ddd`.
-Use `spring-transactions-and-events` for actual Spring interception and
-`idempotency` for a distributed deduplication protocol. These are optional handoffs;
-the core workflow here remains usable when they are unavailable.
-
-Report the implemented action and boundary, relevant failure/commit guarantees,
-checks executed and remaining evidence gaps. A review supplies concrete findings
-and discriminating checks; it may conclude the existing design is adequate. A code
-sketch or passing unit test does not establish production atomicity, performance or
-measured improvement in agent behavior.
-
-The application-boundary concept follows the
-[Service Layer entry in Fowler's catalog](https://martinfowler.com/eaaCatalog/serviceLayer.html).
-The model's independence from application tasks follows Evans's
-[DDD Reference, Layered Architecture and Repositories](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf).
-The class names, command/output shape and framework-free application boundary are
-this family's implementation choices; those sources do not prescribe them.
+Deliver the implemented action and its tests, or concrete review findings with
+source locations and consequences. Report source-faithful limitations, intentional
+adaptations and validation results without claiming a gateway mock proves durable
+persistence, atomic cleanup or measured improvement in agent behavior.

@@ -1,14 +1,14 @@
 schemaVersion: 1
 
 name: java-ddd-value-objects
-version: 1.0.0
+version: 1.2.0
 description: >-
-  Design and review Java DDD value objects when primitives hide business meaning,
-  factories accept invalid values, equality disagrees with collections, or records expose
-  mutable state. Covers semantic equality, identifiers, immutable composition, explicit
-  normalization, money, units, ranges, and persistence or JSON boundaries within a bounded
-  context. Use for CustomerDocument.of(), OrderID, monetary values, and replacing primitive
-  obsession. Aggregate consistency and use-case orchestration belong to their own skills.
+  Implement and review domain value objects and typed identifiers using the ddd-example
+  domain conventions. Use for ValueObject, Identifier, CategoryID, CastMemberID, GenreID,
+  VideoID, media factories, equality and hashing, resource aliasing, and value-object unit
+  tests. Preserve the reference's per-type construction and normalization rules. Aggregate
+  lifecycle, Gateway implementations, application orchestration and infrastructure are
+  outside this skill.
 
 license: Apache-2.0
 
@@ -40,12 +40,10 @@ files:
 dependencies: []
 
 suggests:
+  - java-ddd
   - java-ddd-aggregates
-  - java-ddd-use-cases
   - java-ddd-repositories
-  - java-immutability
-  - java-object-contracts
-  - java-numeric-types
+  - java-ddd-testing
 
 capabilities:
   - reads-source
@@ -54,4 +52,4 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Value Objects
-      short_description: Business values, equality and immutable Java models
+      short_description: Reference domain IDs, media values and equality

@@ -3124,11 +3124,10 @@ skills:
         path: skills/java-date-and-time
         integrity: sha256-Q0p/2zUCk1SwPLBmAHrB7RCMLkrnXp/4oTv6emURc04=
   - name: java-ddd
-    description: Turn a business workflow into a Java DDD model and a complete use-case slice when language, invariants and
-      responsibilities must be resolved together. Discover the context, choose proportionate tactical patterns, and
-      preserve the project's domain, application and infrastructure naming. Use for a new domain capability or a model
-      refactoring spanning several DDD building blocks; focused aggregate, value-object, persistence and Spring
-      mechanism tasks have specialist owners.
+    description: Implement or review a Java DDD domain layer using the ddd-example domain module as the sole technical
+      reference. Use when a capability spans aggregate organization, Entity, AggregateRoot, ValueObject, Identifier,
+      validation, exceptions, utilities, Gateways, events and domain tests. Resolve missing business rules before
+      coding; application orchestration, persistence adapters and HTTP contracts have separate owners.
     keywords:
       - java
       - ddd
@@ -3136,34 +3135,34 @@ skills:
       - ubiquitous-language
       - clean-architecture
       - domain-modeling
-    latest: 1.0.1
+    latest: 1.2.0
     versions:
-      - version: 1.0.1
+      - version: 1.2.0
         path: skills/java-ddd
-        integrity: sha256-1gEb/mbp9ifvcmcvliMotSCv0egTmTFC1VxCYlybACc=
+        integrity: sha256-dCXReV1K/bAYgwDDyo0xYmm4296HEL1OP4xgp4g3DBQ=
   - name: java-ddd-aggregates
-    description: Design and implement Java DDD aggregates when deciding which entities must change atomically, moving
-      invariants out of setters, separating creation from rehydration, or preventing concurrent writes from bypassing
-      the root. Covers domain identity, child ownership, valid transitions and aggregate version checks. Use for
-      aggregate boundaries and lifecycle behavior; bounded-context discovery and ORM mapping have separate owners.
+    description: Implement and review Java domain aggregates using the ddd-example domain contract. Use when organizing
+      aggregate packages, implementing typed roots, new/with factories, validation timing, lifecycle methods,
+      cross-aggregate IDs or collection ownership. Covers Category, Genre, CastMember and Video patterns with domain
+      unit checks; application orchestration, persistence adapters and concurrency protocols are outside scope.
     keywords:
       - java
       - domain-driven-design
       - aggregates
       - entities
       - invariants
-      - optimistic-locking
+      - validation
       - rehydration
-    latest: 1.0.1
+    latest: 1.1.1
     versions:
-      - version: 1.0.1
+      - version: 1.1.1
         path: skills/java-ddd-aggregates
-        integrity: sha256-vrU9oEusHJffYBiC66iLz4RTliF9QIfAHeHi9y3eGA0=
+        integrity: sha256-zCW/mnE+MU/iYCggGabOntVNKeB3jvVcDBfNIiTbJlY=
   - name: java-ddd-domain-events
-    description: Model Java DDD domain events when an aggregate transition needs an explicit business fact, handlers see
-      mutable state, rehydration emits duplicate facts, or saving loses pending events. Define immutable payloads,
-      occurrence identity, time, collection lifetime and the integration boundary in domain/application/infrastructure
-      packages. Excludes broker operations, event sourcing and Spring listener configuration.
+    description: Implement and review Java DDD domain events using the ddd-example domain pattern. Use when adding an
+      aggregate event, preserving pending events during copying, checking media event triggers, or testing publication
+      failure and queue cleanup. Covers DomainEvent, DomainEventPublisher, Entity and VideoMediaCreated with simple
+      domain tests without mocks. Excludes application, infrastructure and delivery design.
     keywords:
       - java
       - ddd
@@ -3171,36 +3170,35 @@ skills:
       - clean-architecture
       - aggregates
       - event-lifecycle
-    latest: 1.0.0
+    latest: 1.2.0
     versions:
-      - version: 1.0.0
+      - version: 1.2.0
         path: skills/java-ddd-domain-events
-        integrity: sha256-lB92wyi+pH4OZ4BoRAnG2yZZ0W+RBOdiL01oZM1R3nc=
+        integrity: sha256-UtaYp3mzZ0EVbGhtG9O25/kjWioZtagQnMEcwnMhT4E=
   - name: java-ddd-domain-services
-    description: Place Java DDD behavior in an aggregate, value object, domain service, policy, specification or factory
-      using business ownership and consistency requirements. Use when a service takes over entity behavior, a rule
-      combines several domain concepts, a policy needs external facts, or creation and rehydration are confused. Covers
-      business names and packages, pure decision contracts and rule validation; excludes application orchestration,
-      database query construction and persistence implementations.
+    description: Implement Java DDD behavior placement, named factories and validation following the ddd-example domain
+      reference. Use when deciding where a domain rule belongs, implementing Validator and ValidationHandler, collecting
+      Notification errors, or preserving validation timing during creation, restoration and update. Covers aggregate and
+      value-object behavior without inventing domain services, policies or specifications; excludes application
+      orchestration and infrastructure.
     keywords:
       - java
       - ddd
       - domain-services
-      - domain-policy
-      - specification
+      - validation
+      - notification
       - factory
       - clean-architecture
-    latest: 1.0.0
+    latest: 1.2.0
     versions:
-      - version: 1.0.0
+      - version: 1.2.0
         path: skills/java-ddd-domain-services
-        integrity: sha256-0l9PemGr1jZsGAdLLCcKUKZHTgWOCD/UdG0lZbXuUVE=
+        integrity: sha256-bx0VtQNuiLQ0j71homRfunkFRwL4EPSJ6phxBs9iwHE=
   - name: java-ddd-repositories
-    description: Implement or review Java DDD aggregate persistence when a Gateway loses identity, audit or child state,
-      concurrent updates bypass an aggregate invariant, database errors become not-found results, or an in-memory fake
-      hides missing saves. Preserve inward dependencies and the project's Gateway, JpaEntity and Repository naming. Owns
-      reconstitution and aggregate persistence contracts; excludes aggregate boundary discovery, generic Repository
-      selection and detailed ORM configuration.
+    description: Implement or review domain Gateway interfaces using the ddd-example domain reference. Use when defining
+      aggregate lookups and writes, typed-ID existence queries, pagination, video previews or media resource ports.
+      Preserves the exact domain contracts and package placement; excludes application orchestration, persistence
+      adapters, ORM mappings and transaction implementation.
     keywords:
       - java
       - domain-driven-design
@@ -3208,38 +3206,40 @@ skills:
       - gateway
       - repository
       - reconstitution
-      - optimistic-locking
-    latest: 1.0.1
+      - pagination
+      - domain-port
+    latest: 1.2.0
     versions:
-      - version: 1.0.1
+      - version: 1.2.0
         path: skills/java-ddd-repositories
-        integrity: sha256-HTvnjUq3YN1CMiMQ4J2ZdWlGHZYVoloS75VVcluqd7Y=
+        integrity: sha256-3pYBj9am8vOwSRYLII7xfdiSwAXQZ87zeZ9AUPMW9Jo=
   - name: java-ddd-testing
-    description: Write and review Java DDD tests for aggregate invariants, value-object equality, use-case outcomes, gateway
-      rehydration, concurrency conflicts and domain-event durability. Use when extracting behavior into a domain model,
-      testing rejected transitions, replacing repository mocks with in-memory gateways, or checking whether persistence
-      tests protect the aggregate's consistency boundary. Follows domain, application and infrastructure packages. Does
-      not choose bounded contexts or replace general Java test design, Spring test setup or database performance
-      analysis.
+    description: "Write and review Java DDD domain unit tests following the ddd-example domain reference: real aggregates
+      and values, validation handlers, typed IDs, exceptions, utilities and local domain events. Use when adding a
+      domain behavior test, checking validation timing or reviewing assertions that may miss a domain defect. Requires
+      no mocks and @DisplayName on every unit test. Does not implement application, persistence, Spring or
+      message-delivery tests."
     keywords:
       - java
       - ddd
       - domain-driven-design
       - aggregate
       - value-object
-      - use-case
+      - domain-events
+      - validation
+      - junit
       - testing
       - clean-architecture
-    latest: 1.0.1
+    latest: 1.2.0
     versions:
-      - version: 1.0.1
+      - version: 1.2.0
         path: skills/java-ddd-testing
-        integrity: sha256-zSukfYcUjyZPSDusoQp/D6XeheO1rn/3l61BJPA8hfU=
+        integrity: sha256-xN1+8sND0/t/XUcDqxNryuoasH1lS6hhGPLEtSkANu8=
   - name: java-ddd-use-cases
-    description: Implement or review Java DDD application use cases when commands, aggregate orchestration, authorization
-      and commit outcomes are mixed. Preserve action-based packages, UseCase/DefaultUseCase contracts and
-      framework-independent commands and outputs; distinguish creation, absence, concurrency and replay. Excludes
-      deciding whether a service layer is needed, strategic context design and Spring or ORM configuration mechanics.
+    description: Implement or review Java application actions using the catalog reference's category, cast-member, genre,
+      video and media use cases. Use for command/output records, Default implementations, validation and exception
+      differences, gateway sequencing, media cleanup and Mockito unit tests. Preserves the reference's behavior;
+      excludes domain implementation, infrastructure, authorization and transaction protocols absent from that source.
     keywords:
       - java
       - ddd
@@ -3247,17 +3247,17 @@ skills:
       - application-layer
       - clean-architecture
       - commands
-    latest: 1.0.0
+    latest: 1.1.1
     versions:
-      - version: 1.0.0
+      - version: 1.1.1
         path: skills/java-ddd-use-cases
-        integrity: sha256-LLeQvlHToAhdKPor8By8doIjHTx8nU+Q5KpegKB9Scg=
+        integrity: sha256-PTbRgU6+IQg3pDdbtdV9ZP03EWvCIaVwsNzAcrjA7I0=
   - name: java-ddd-value-objects
-    description: Design and review Java DDD value objects when primitives hide business meaning, factories accept invalid
-      values, equality disagrees with collections, or records expose mutable state. Covers semantic equality,
-      identifiers, immutable composition, explicit normalization, money, units, ranges, and persistence or JSON
-      boundaries within a bounded context. Use for CustomerDocument.of(), OrderID, monetary values, and replacing
-      primitive obsession. Aggregate consistency and use-case orchestration belong to their own skills.
+    description: Implement and review domain value objects and typed identifiers using the ddd-example domain conventions.
+      Use for ValueObject, Identifier, CategoryID, CastMemberID, GenreID, VideoID, media factories, equality and
+      hashing, resource aliasing, and value-object unit tests. Preserve the reference's per-type construction and
+      normalization rules. Aggregate lifecycle, Gateway implementations, application orchestration and infrastructure
+      are outside this skill.
     keywords:
       - java
       - ddd
@@ -3266,11 +3266,11 @@ skills:
       - equality
       - immutability
       - clean-architecture
-    latest: 1.0.0
+    latest: 1.2.0
     versions:
-      - version: 1.0.0
+      - version: 1.2.0
         path: skills/java-ddd-value-objects
-        integrity: sha256-AtsytfQRrW0PyFHwF61vvXY/Zxts4yn8eyKNt17tdo0=
+        integrity: sha256-jE0RXA6E6i1V/Vrxg2F33252ACjEpaXrqNUsepSuT1U=
   - name: java-defensive-programming
     description: "Where to defend in Java and where defence becomes noise: trust boundaries as the organising idea,
       preconditions with Objects.requireNonNull and explicit range and state checks, fail-fast over limping on, input
@@ -5610,26 +5610,25 @@ skills:
         path: skills/service-identity-and-trust
         integrity: sha256-p/TvH+30MIByPFzxV97N2HVSixXQPeYA3PPRn54y18M=
   - name: service-layer-design
-    description: "Designing the layer that fronts business logic: what an application service owns (transaction boundary,
-      authorisation, orchestration, translation) and what it must not absorb, the difference between application and
-      domain services, and whether the layer is warranted at all. Use when every service method is a single repository
-      call, when a service has become where all rules accumulate, when two services call each other and transactions
-      nest, when authorisation is spread between controller and repository, or when a facade is added over a facade.
-      Does not cover where the rules belong (domain-logic-organization), transaction semantics
-      (enterprise-transactions), remote API design (remote-facade-and-dto), or layer dependency direction
-      (layering-and-boundaries)."
+    description: "Organizing and reviewing the Java APPLICATION layer exactly as demonstrated by ddd-example/application:
+      aggregate/action packages, independent use-case base classes, abstract action contracts and Default
+      implementations, command/output records, and domain gateway dependencies. Use when locating or adding an
+      application action, reviewing its boundary, or reproducing the reference organization. Preserve the reference's
+      technical and organizational choices; ask about missing patterns instead of supplying another service
+      architecture. Detailed action behavior and tests belong to java-ddd-use-cases; controllers, adapters, transactions
+      and authorization are outside this reference's demonstrated application scope."
     keywords:
       - service-layer
+      - application-layer
       - use-case
       - application-service
-      - god-service
-      - transactions
-      - spring
-    latest: 1.2.4
+      - ddd
+      - reference-fidelity
+    latest: 1.3.0
     versions:
-      - version: 1.2.4
+      - version: 1.3.0
         path: skills/service-layer-design
-        integrity: sha256-hQPY9t++mjWXVUcejguQ26PmufwaJ6WLk3kcT384fW0=
+        integrity: sha256-TujRFAs3CJvfeYYAySCvUWRQD08fRxxYjRyjNpXiALs=
   - name: session-state-strategies
     description: "Placing the state that spans several requests of one conversation: client session state, server session
       state and database session state, plus signed tokens and external stores. Use when a multi-step wizard loses its
@@ -5851,19 +5850,20 @@ skills:
         integrity: sha256-aFwrf7hCR7WF1K7ygqt1vRTR4iEdo3ldOyxZGbQpkaE=
   - name: spring-boot-web
     description: Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding, validation, error
-      responses, Tomcat capacity or consumer contracts need verification. Covers documentation strategy, complete
-      springdoc OpenAPI descriptions, examples and UI. Excludes WebFlux, identity providers and database query design.
+      responses, Tomcat capacity or consumer contracts need verification. Covers documentation strategy and complete
+      springdoc OpenAPI contracts using the Customer reference's API interfaces, DTO schemas, examples, customizers and
+      error handlers. Excludes WebFlux, identity providers and database query design.
     keywords:
       - java
       - spring-boot
       - spring-mvc
       - openapi
       - springdoc
-    latest: 1.2.1
+    latest: 1.4.0
     versions:
-      - version: 1.2.1
+      - version: 1.4.0
         path: skills/spring-boot-web
-        integrity: sha256-eHnhOIDKFlW5lFB/aXxG+Rjrwy2q6IyV7h8DbwAjlJM=
+        integrity: sha256-VWPFF2ZWKo2hRPOmLNkjJzYHBhbgYUis/ShLyRn5fU4=
   - name: spring-http-clients
     description: Implement outbound Spring integrations or diagnose RestClient, WebClient and HttpExchange proxies that lose
       Boot configuration, stall, buffer oversized responses or retry uncertain mutations. Covers transport wiring and

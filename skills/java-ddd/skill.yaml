@@ -1,13 +1,12 @@
 schemaVersion: 1
 name: java-ddd
-version: 1.0.1
+version: 1.2.0
 description: >-
-  Turn a business workflow into a Java DDD model and a complete use-case slice when
-  language, invariants and responsibilities must be resolved together. Discover the
-  context, choose proportionate tactical patterns, and preserve the project's domain,
-  application and infrastructure naming. Use for a new domain capability or a model
-  refactoring spanning several DDD building blocks; focused aggregate, value-object,
-  persistence and Spring mechanism tasks have specialist owners.
+  Implement or review a Java DDD domain layer using the ddd-example domain module as
+  the sole technical reference. Use when a capability spans aggregate organization,
+  Entity, AggregateRoot, ValueObject, Identifier, validation, exceptions, utilities,
+  Gateways, events and domain tests. Resolve missing business rules before coding;
+  application orchestration, persistence adapters and HTTP contracts have separate owners.
 license: Apache-2.0
 authors:
   - name: agent-skills contributors
@@ -28,22 +27,23 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 dependencies:
   - name: java-ddd-aggregates
-    version: ^1.0.0
+    version: ^1.1.1
   - name: java-ddd-value-objects
-    version: ^1.0.0
-  - name: java-ddd-use-cases
-    version: ^1.0.0
+    version: ^1.2.0
   - name: java-ddd-domain-services
-    version: ^1.0.0
+    version: ^1.2.0
   - name: java-ddd-repositories
-    version: ^1.0.0
+    version: ^1.2.0
   - name: java-ddd-domain-events
-    version: ^1.0.0
+    version: ^1.2.0
   - name: java-ddd-testing
-    version: ^1.0.0
+    version: ^1.2.0
 suggests:
+  - java-ddd-use-cases
+  - service-layer-design
   - bounded-context-design
   - domain-logic-organization
   - spring-boot-clean-architecture
@@ -55,4 +55,4 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD
-      short_description: Business models, project conventions and complete DDD slices
+      short_description: Reference-faithful domain models, core contracts and tests

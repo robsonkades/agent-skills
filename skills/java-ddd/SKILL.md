@@ -1,119 +1,132 @@
 ---
 name: java-ddd
 description: >-
-  Turn a business workflow into a Java DDD model and a complete use-case slice when
-  language, invariants and responsibilities must be resolved together. Discover the
-  context, choose proportionate tactical patterns, and preserve the project's domain,
-  application and infrastructure naming. Use for a new domain capability or a model
-  refactoring spanning several DDD building blocks; focused aggregate, value-object,
-  persistence and Spring mechanism tasks have specialist owners.
+  Implement or review a Java DDD domain layer using the ddd-example domain module as
+  the sole technical reference. Use when a capability spans aggregate organization,
+  Entity, AggregateRoot, ValueObject, Identifier, validation, exceptions, utilities,
+  Gateways, events and domain tests. Resolve missing business rules before coding;
+  application orchestration, persistence adapters and HTTP contracts have separate owners.
 ---
 
 # Java DDD
 
-Translate business examples into an executable model in the project's language. Own
-the connection between discovery and a complete Java implementation, including the
-choice to keep a simple capability simple. A collection of classes named Entity,
-ValueObject and UseCase does not establish that the model expresses the business.
+Translate confirmed business examples into domain code following the reference's
+actual contracts. This skill owns the common domain foundation and coordinates the
+specialists. It does not replace a domain task with an application or infrastructure slice.
 
-## Discover the model and its implementation contract
+For the common bases, use the complete source files:
+[AggregateRoot.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/AggregateRoot.java),
+[Entity.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Entity.java),
+[Identifier.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/Identifier.java)
+and [ValueObject.java](assets/domain/src/main/java/com/robsonkades/admin/catalogo/domain/ValueObject.java).
+When an implementation or one of its imported types is needed, read the
+[domain source index](references/source-index.md). It maps all 49 production types to
+one complete source file each in this hub or its required specialists, including the
+exceptions and utilities owned here. Read the affected contracts before adapting them;
+the individual files depend on other indexed types and are not isolated snippets.
 
-Start with an accepted and a rejected scenario; include correction or cancellation
-when lifecycle behavior is involved. Reuse established examples and tests where sufficient.
-Identify the actor, business outcome, terms, identity, lifecycle, required facts,
-decision owner and when each rule must hold. A user story or existing table describes
-part of this evidence; neither establishes an invariant by itself. Record unresolved
-business rules as assumptions and ask only when the answer changes the implementation.
-Continue work whose requirements are already established.
+## Reference and scope
 
-Read the target's instructions, glossary/ADRs, representative domain classes, use cases,
-gateways, entry points, mappings and tests. Inspect Maven/Gradle toolchains, compiler
-release, dependencies and runtime configuration. Separate its current behavior from a
-proposed correction. Characterize observable legacy behavior before replacing it;
-moving validation or changing equality can break callers even if the new model is clearer.
+The sole technical authority is the current user-designated `ddd-example/domain`
+module. The bundled references capture the inspected revision and its source paths;
+they are portable instructions, not a requirement for a Windows directory to exist.
+Do not substitute an older `ddd-example-master` checkout, installed foundation,
+external DDD prescription or a preferred implementation style.
 
-This family's Java illustrations use a **Java 17 source baseline**, without preview
-features. The reference fixes Java 17 for its Gradle `buildSrc` and Spring Boot 2.7.7,
-but does not explicitly pin an application toolchain/release. These are historical
-reference facts, not a recommended dependency baseline or permission to upgrade.
-Records need Java 16+, sealed classes Java 17+; preserve the target's supported style.
-JSpecify and framework libraries are optional existing contracts, not dependencies to
-introduce merely for following a convention.
+Use the user's business vocabulary with the reference's implementation shape. A new
+business rule, ownership boundary or choice between its different aggregate families
+needs evidence. Inspect the available source and requirements first; ask a focused
+question when that evidence does not resolve a consequential choice. Do not silently
+turn an unknown into a rule. Continue independent work whose contract is established.
 
-When matching package/class style, read
-[the reference conventions](references/project-conventions.md). It distinguishes the
-verified catalog example from the installed foundation's alternative names, and records
-which implementation details must not become universal rules. Do not require that
-example repository or a machine-specific path to apply this skill.
+For package placement, shared base types, exceptions or utilities, read
+[reference conventions](references/project-conventions.md). For a new capability,
+conflicting requirements or a missing reference family, read
+[modeling decisions](references/modeling-decisions.md).
 
-## Choose the model before the class hierarchy
+## Establish the implementation contract
 
-| Evidence                                                             | Decision to test                                                          | Counterexample or verification                                                               |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Straightforward data capture with little evolving policy             | Retain a simple application operation or transaction script               | Do not add an aggregate hierarchy merely to wrap CRUD; revisit when interacting rules emerge |
-| The same term has incompatible identities, meanings or change owners | Establish separate contextual models and an explicit translation          | Different response fields alone do not establish separate contexts                           |
-| A concept changes but must retain business identity                  | Model an entity; identify which root owns its lifecycle and changes       | A database primary key alone does not make a domain concept an entity                        |
-| Values are interchangeable according to business-defined equality    | Model an immutable VO with validation and meaningful operations           | An event/audit record may still need identity even if its fields match                       |
-| Several state elements must satisfy one rule at commit               | Evaluate one aggregate boundary and its concurrency mechanism             | Object navigation, screen composition and a table join do not prove an atomic invariant      |
-| A domain calculation does not fit an entity or VO                    | Use a business-named policy/service with explicit inputs and facts        | Loading, saving and transport coordination usually belong to the use case                    |
-| Another context needs a durable external effect                      | Define a supported integration contract and reliable commit/delivery path | An in-process notification does not itself require a broker or outbox                        |
+1. **Read the affected family and its tests.** Identify the operation, accepted and
+   rejected inputs, current state, identity, lifecycle and expected result. Reuse
+   explicit business examples; an existing table or field name cannot supply an
+   unmentioned business rule. Record the exact reference types/methods being followed.
+2. **Check the target's compatibility.** Inspect compiler settings, toolchain,
+   dependencies and test configuration. The source uses Java 17-compatible constructs;
+   its `buildSrc` targets Java 17, while the shared Java conventions do not explicitly
+   fix the domain compiler release/toolchain. Do not infer that setting or upgrade
+   Java, Gradle or dependencies. No Spring, JPA or validation-framework annotations
+   appear in the reference domain production code.
+3. **Map the domain package.** Keep the common base types directly under `domain`,
+   aggregate families under `domain.<aggregate>`, and shared validation, exceptions,
+   events, pagination and utilities in their named packages. Colocate a root with
+   its `<Root>ID`, `<Root>Gateway`, `<Root>Validator` and relevant domain types.
+   Reuse existing matching base contracts; do not create a parallel base hierarchy.
+4. **Preserve the selected contract.** Keep factory names, constructor visibility,
+   equality, failure types/messages, validation timing, copying and fluent return
+   behavior from that family. Creation and `with(...)` reconstruction are different
+   operations. Reconstruction restores identity and lifecycle data instead of
+   generating them again. Do not normalize the source's deliberate or observed
+   differences without an explicit request to change the contract.
+5. **Implement and verify the domain behavior.** Check the actual transition and
+   rejection result, including state after failure. Domain tests use real domain
+   objects and no mocks, spies or Mockito. Every unit test method must have a meaningful
+   `@DisplayName`, including parameterized tests when used. This display-name rule is
+   an explicit user requirement in addition to the source, whose existing tests omit it.
+   Keep tests simple, behavior-focused and readable; do not add getter/class-existence
+   checks solely to increase a test count. For temporal transitions, initialize fixed
+   past timestamps through an existing `with(...)` factory; do not use sleeps or mocks
+   to force the clock forward. This is also an explicit user testing requirement.
 
-Use `bounded-context-design` when the semantic boundary or context relationship is
-unresolved, and `domain-logic-organization` when rich domain modeling itself is in
-question. Subdomains describe business problems and investment; contexts delimit models.
-Neither maps automatically to a Java module, team or deployed service. For collaborative
-discovery and investment decisions, read [modeling decisions and sources](references/modeling-decisions.md).
+## Contracts that must remain visible
 
-## Deliver one coherent slice
+- `ValueObject` is an empty abstract base. `Identifier` extends it and declares
+  `String getValue()`. Neither base supplies automatic value equality, immutability
+  or validation. Follow each concrete type's implementation.
+- `Entity<ID extends Identifier>` owns a non-null, `protected final ID id`, abstract
+  `validate(ValidationHandler)`, runtime-class-and-ID equality and recorded events.
+  `AggregateRoot<ID extends Identifier>` adds only forwarding constructors.
+- `Category` and `Video` expose explicit `validate(handler)`; their constructors and
+  updates do not call it. `CastMember` and `Genre` call `selfValidate()` in construction
+  and after updating fields. A failed update does not imply rollback. Preserve the
+  relevant family's validation path instead of making every root reject at creation.
+- An unmodifiable view is not a defensive snapshot. The source has live views,
+  copied collections, aliased collections and mutable resource bytes. Preserve the
+  actual method's behavior; do not promise deep immutability or add copying by habit.
+- Use the reference exception hierarchy and `validation.Error` contracts. Do not
+  translate a domain error into an HTTP status, introduce error codes, or replace
+  `Notification` with Bean Validation as part of this domain implementation.
+- Gateways are domain interfaces, and events are recorded domain facts. Their presence
+  does not establish persistence, commit timing, message delivery or thread safety.
+  Keep those claims outside the evidence this module supplies.
 
-1. **State the invariant in business terms.** Identify what would violate it and whether
-   it must hold immediately, at commit or after an accepted delay. Do not replace a
-   strict rule with eventual consistency to fit a pattern. Choose the authoritative
-   decision location, including other writers and concurrent requests.
-2. **Place behavior and names.** Keep business transitions with their aggregate/entity
-   or VO. Use typed IDs and meaningful names from the scoped glossary. A use case
-   orchestrates one application action. Reuse existing base classes only where they
-   express useful contracts; do not create generic frameworks for every new feature.
-3. **Define crossings before adapters.** Specify command/result, trusted actor context,
-   absence, rejected input, conflict, dependency failure and when success is durable.
-   Put outward ports in the inner layer that owns the need. In the reference family,
-   a domain `CategoryGateway` and an infrastructure Spring Data `CategoryRepository`
-   play different roles. Preserve existing names and error contracts deliberately.
-4. **Implement the actual path.** Connect the domain change, use-case orchestration,
-   gateway implementation, transport mapping and external bean/transaction composition
-   needed by the request. Preserve authorization for HTTP, jobs and message handlers.
-   Do not return persistence models or trust a request-supplied tenant/role as authority.
-   A simple query may return an application projection without loading an aggregate.
-5. **Prove the consequential behavior.** Exercise acceptance and rejection, checking
-   that rejection causes no unintended state or effect. Check VO equality and aliasing,
-   rehydration without new facts/events, and the real commit/conflict path when relevant.
-   When introducing or changing build/module boundary checks, show that they reject
-   a known forbidden dependency and inspect nonempty production classes. Reuse existing
-   checks when their coverage is sufficient. A fake cannot establish database isolation
-   or durable messaging.
+## Load the specialist for the affected decision
 
-For tactical depth, use `java-ddd-aggregates` for identity, ownership and consistency;
-`java-ddd-value-objects` for value semantics; `java-ddd-domain-services` for policy and
-factory placement; and `java-ddd-use-cases` for orchestration contracts. Use
-`java-ddd-repositories` for aggregate persistence, `java-ddd-domain-events` for recorded
-facts and delivery boundaries, and `java-ddd-testing` for discriminating behavioral
-checks. These seven specialists install alongside this hub; load only the specialists
-needed for the affected decisions and contracts.
+| Domain work                                                                           | Specialist                 |
+| ------------------------------------------------------------------------------------- | -------------------------- |
+| Root organization, lifecycle, associations, creation/reconstruction and copy behavior | `java-ddd-aggregates`      |
+| Concrete value types, `<Root>ID`, factories, equality and resource ownership          | `java-ddd-value-objects`   |
+| Validators, handlers, notifications and placement of domain behavior                  | `java-ddd-domain-services` |
+| `<Root>Gateway`, media ports, search and pagination contracts                         | `java-ddd-repositories`    |
+| `DomainEvent`, publisher, registration and event-list lifecycle                       | `java-ddd-domain-events`   |
+| Simple domain unit tests, real objects, `@DisplayName` and useful assertions          | `java-ddd-testing`         |
 
-`spring-boot-clean-architecture` and `spring-boot-hexagonal-architecture` own Spring
-composition and boundary mechanics. DDD does not require Spring, microservices, CQRS
-or event sourcing. Keep those choices explicit rather than inheriting them from an example.
+These six domain specialists install alongside this hub; read only the ones required
+by the affected contracts. `java-ddd-use-cases` owns a separately requested application
+operation. Spring composition and adapters belong to `spring-boot-clean-architecture`
+or `spring-boot-hexagonal-architecture`. `bounded-context-design` and
+`domain-logic-organization` can support a separately requested architecture discussion;
+they do not override this domain implementation reference.
 
 ## Make the result reviewable
 
-Match the requested mode: a review gives concrete findings and checks; a design gives
-the model, important alternative and evidence that would change the choice; an
-implementation delivers the integrated slice and actual checks. For a small change,
-a short explanation can cover the invariant, owning type, package placement, public
-contract and test result. A multi-context capability may also need a glossary/context
-map and staged migration. Do not require a ceremony or workshop for an already clear rule.
+Match the requested mode. A review identifies the mismatched contract, source evidence,
+consequence and correction. A design identifies the domain types, reference family and
+unresolved business questions. An implementation delivers the requested domain code and
+meaningful tests. A short change report should name the behavior, owning type, relevant
+reference, checks actually run and any unresolved requirement.
 
-Report observed conventions separately from proposed improvements. State which checks
-ran and what remains unproven. Compiling illustrative code proves neither stakeholder
-agreement nor production concurrency. Author attribution supplies rationale, not an
-endorsement of this catalog or a substitute for testing the target's behavior.
+Distinguish source observations from user additions and proposed changes. If a requested
+guarantee contradicts the reference, explain the exact conflict and ask before changing
+that guarantee. Do not modify the reference repository merely because it was consulted.
+Compilation and source comparison do not establish production concurrency or measured
+skill improvement; report only the validation performed.

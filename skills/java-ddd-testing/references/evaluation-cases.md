@@ -1,132 +1,136 @@
 # Evaluation cases
 
-Read when evaluating the skill or auditing a suite's evidence. These are written probes
-for agent decisions; they have not been executed against a target Java application.
-Choose relevant probes and record input, proposed/applied change, actual checks and outcome.
-These are teaching cases, not held-out evaluations. For an independent agent run, supply
-only the input and ordinary project context; keep expected decisions and failure criteria
-with the evaluator. Cases 1 and 1b change the persistence contract while keeping the
-load-and-mutate operation, so the recommended test must change.
+Read when reviewing the skill or checking whether its decisions remain faithful to
+the domain reference. These are written teaching cases, not executed agent trials.
+Give an independent evaluator the criteria separately from the task input; provide
+the actor only the input, skill and ordinary source access. Record the exact skill
+revision, source state, agent output and executed checks. Compiling the examples
+does not measure improvement in agent behavior.
 
-## 1. Shared reference hides an omitted save
+Use `C:/git/ddd-example/domain` at the source revision recorded in
+`behavioral-checks.md`, or record the current revision and adjust expectations
+from actual source. Every generated unit test must contain `@DisplayName`, use
+real domain objects and follow the source's test naming/structure.
 
-**Input:** `OrderGatewayInMemory` stores `Order` directly in a map. The use case loads and
-submits it but never calls the explicit persistence operation. The test reloads from the
-same map and passes.
+## 1a. Explicit validation
 
-**Expected decision:** identify the alias, use detached snapshots for this port contract,
-test fake isolation and observe the use-case test fail for the omitted write before fixing
-it. Do not merely assert that the mock saw `save()` and claim persistence is proved.
+**Input:** Add a test for a category with a null name, using the reference domain.
 
-**Failure:** keeps the shared mutable map as explicit-save evidence, or labels an
-unexecuted proposed test as an observed failure.
+**Expected:** Construct `Category.newCategory(null, ...)`, invoke
+`validate(new ThrowsValidationHandler())` inside `assertThrows`, and assert
+one `DomainException` error with the exact name message.
 
-## 1b. Managed state persists through a unit of work
+**Failure:** Expects the factory to throw, replaces the validation design or tests a
+mocked category. A proposed test is not an executed result.
 
-**Input:** the same use case loads and submits an order without calling `save()`. This
-time the port explicitly returns a managed aggregate inside a unit of work; successful
-commit must persist changes and rollback must discard them. Review the test evidence.
+## 1b. Self-validation changes the failing call
 
-**Expected decision:** preserve this contract. Test commit and rollback through a suitable
-transaction-scoped fake or the real adapter; use independent post-transaction reads for
-durability claims. Do not demand detached snapshots on every read inside the unit of work.
+**Input:** The same request, but the subject is `CastMember.newMember` with null
+name and an otherwise valid type.
 
-**Failure:** adds `save()` solely to satisfy case 1's expectations, treats object aliasing
-within one managed context as sufficient proof of a bug, or calls fake rollback database
-evidence. Findings-only work must leave the application untouched.
+**Expected:** Read `CastMember`, assert `NotificationException` from the factory
+and inspect the name error. The decisive constraint changed from external validation
+to self-validation, so the test boundary must change.
 
-## 2. Rejection is observed after mutation
+**Failure:** Reuses the category test's explicit-validation sequence or claims all
+aggregates use one validation lifecycle.
 
-**Input:** `submit()` updates status/audit data, then discovers an invalid child and throws.
-The test only asserts `DomainException`.
+## 2. Rejection after mutation
 
-**Expected decision:** establish the transition's contract; for an invariant-preserving
-command, add assertions on original fields, child state, audit data and event buffer.
-Fix the mutation ordering if authorized. Distinguish an existing candidate/notification
-validation design from a newly imposed always-valid construction policy.
+**Input:** Review a proposed `Genre.update` test that expects a null-name rejection
+to leave name, categories, active state and timestamps unchanged.
 
-**Failure:** asserts only the exception, or uses an alias as the before-state snapshot.
+**Expected:** Inspect assignments and `selfValidate`; explain that the proposed
+unchanged-state expectation contradicts this reference. Characterize the actual
+exception/error boundary and, when relevant, changed state. Ask before a requested
+production semantic change. For findings-only review, leave production untouched.
 
-## 3. Immutable collection leaks a mutable child
+**Failure:** Reorders production mutation to satisfy the invented test, claims
+the exception proves rollback or snapshots the previous state by aliasing the root.
 
-**Input:** root exposes `List.copyOf(lines)` but a caller can set a line quantity directly.
+## 3. Mockito and missing display names
 
-**Expected decision:** test the attempted bypass and the root invariant, not just whether
-`add()` throws. Suggest immutable child views or restricted mutation consistent with the
-existing API. Do not claim `List.copyOf` performs a deep copy.
+**Input:** Shared build dependencies contain Mockito. A domain test mocks a
+`Video` and verifies `validate` was called; its only annotation is `@Test`.
+Rewrite it to prove a real title validation rule.
 
-**Failure:** tests only list structure while the mutable child still bypasses the root.
+**Expected:** Use the real factory and handler, exact error assertions and
+method-level `@DisplayName`. Keep the existing `UnitTest` tag convention.
 
-## 4. Gateway test sees its own persistence context
+**Failure:** Keeps a spy/mock/static mock, treats a shared dependency as permission,
+or adds `@DisplayName` only to the class while unit test methods lack it.
 
-**Input:** save then find returns an equal ID, with no flush/context separation. A mapper
-omits a value object and reassigns creation time.
+## 4. Value equality is concrete
 
-**Expected decision:** use actual storage and fresh context, assert explicit stored fields,
-precision, timestamps and no newly generated events. State the database actually used.
-Do not equate H2 mapping coverage with production isolation/locking evidence.
+**Input:** Add tests for `ImageMedia` equality and for `Resource` byte ownership.
+A proposed suite treats every `ValueObject` as an immutable all-fields record.
 
-**Failure:** accepts ID equality or a cached entity as proof of a complete round-trip.
+**Expected:** Read both implementations. Independently constructed media with equal
+checksum/location remain equal despite different ID/name; inspect other fields
+explicitly where needed. State that `Resource` does not override equality or copy
+its byte array. Do not introduce those absent contracts through tests.
 
-## 5. Root version misses child conflict
+**Failure:** Asserts inequality for renamed media, all-fields equality for
+`Resource`, or an ownership guarantee absent from the source.
 
-**Input:** two detached copies edit different children subject to one aggregate limit;
-only the root is versioned and tests alter only root scalars.
+## 5. Media state decides the event
 
-**Expected decision:** create the child-only conflict through the real adapter and inspect
-combined committed state; do not infer protection from `@Version` alone. A fake can verify
-how the use case reports conflicts, not whether the database detects them.
+**Input:** Test `Video.updateVideoMedia` with pending media, then with completed
+media in a fresh real video. Show what the domain tests establish.
 
-**Failure:** concludes root-level protection from the annotation or a sequential fake.
+**Expected:** Pending media records the right local event and payload; completed
+media records no encoding-request event. Assert status directly because media
+equality ignores it. Distinguish local event recording from external delivery.
 
-## 6. Authorization tested only at HTTP
+**Failure:** Tests only event nonnull/count without payload for the triggering case,
+expects a new event for completed media or labels a callback reliable delivery.
 
-**Input:** controller rejects an unrelated tenant but a scheduled job invokes the same
-use case with an arbitrary root ID.
+## 6. Update timestamps without sleeps
 
-**Expected decision:** inspect the job's identity and trust contract, test required
-authorization on all supported paths and prove no protected state/event change on denial.
-Do not assume every trusted internal job must impersonate an end-user; preserve the
-documented service principal policy.
+**Input:** A category update test sometimes fails because two immediate timestamps
+are equal. The user requires fixed old dates through the existing reconstruction
+factory and forbids sleeps and mocks.
 
-**Failure:** counts HTTP denial as coverage of every path, or invents an end-user policy
-for an explicitly authorized service principal.
+**Expected:** Reconstruct with explicit past creation/update instants, update the
+real aggregate, check preserved identity/creation date and update-time advancement
+from the past value. Add `@DisplayName`. Report this as authorized test setup,
+not as a change to production time behavior.
 
-## 7. Committed root and missing message
+**Failure:** Adds `Thread.sleep`, static mocking, a new production `Clock` API,
+or merely weakens the original assertion to a nonnull check.
 
-**Input:** a test verifies `publisher.publish` once after save and claims reliable delivery.
+## 7. Interface cannot establish storage
 
-**Expected decision:** identify commit/publish failure windows. If an outbox exists, test
-atomic rollback plus relay recovery and duplicate handling at the claimed boundaries.
-If it does not, report the gap and design options without claiming an unavailable mechanism.
+**Input:** Prove `CategoryGateway.create` persists a category using only the domain
+module. Add an in-memory gateway if necessary.
 
-**Failure:** calls one publish interaction reliable delivery or introduces an unsolicited
-broker/outbox merely to satisfy a test checklist.
+**Expected:** Identify the domain interface and unsupported storage claim. Complete
+any independently useful local factory test; ask for the infrastructure scope and
+actual adapter evidence. No domain fake proves production storage.
 
-## 8. Refactoring starts by replacing old expectations
+**Failure:** Invents persistence semantics, writes an adapter in the domain or
+claims a mock/in-memory map verifies durability.
 
-**Input:** a request extracts DDD behavior from a working application with Mockito tests;
-the proposed change deletes them and introduces a new domain model before reproducing any
-observable behavior.
+## 8. Copy overload changes the result
 
-**Expected decision:** preserve useful tests, characterize the relevant current behavior,
-then extract in small steps. Adopt a fake only where its state contract improves the
-assertion. Report commands/test counts and any unexecuted integration cases separately.
+**Input:** Review a test claiming every `Video.with` invocation clears pending
+events. The provided object already contains one event.
 
-**Failure:** replaces adequate Mockito tests wholesale or reports skipped/zero tests as
-executed evidence.
+**Expected:** Distinguish `with(Video)`, which preserves entries in a copied list,
+from raw-argument `with(...)`, which starts without events. Choose the overload
+named by the actual requirement and assert its event contents.
 
-## 9. Normal return commits a rejected transition
+**Failure:** Uses one blanket rehydration rule, or considers the source test's
+nonnull assertion proof of emptiness.
 
-**Input:** a transactional use case mutates a managed order, catches its validation error
-and returns `Either.left(errors)`. The configured transaction policy has no rule for this
-return type; no exception escapes and no rollback is requested. Its pure test checks only
-the error result. Review whether a rejected transition can be stored.
+## 9. Missing authority or execution evidence
 
-**Expected decision:** identify the dirty-state commit risk and propose or execute the
-actual entry-point test without an outer test transaction. Independently read durable state
-after rejection; distinguish preserving a candidate-validation API from permitting invalid
-commit. If the database cannot run, report the integration gap and limit pure-test claims.
+**Input:** The reference directory is unavailable and the target has conflicting
+factory conventions. A filtered test command later reports zero executed tests.
 
-**Failure:** assumes every error wrapper rolls back, converts the result API to exceptions
-without establishing that need, or claims a fake proves database rollback.
+**Expected:** Ask for the missing technical source or intended conflicting contract.
+Continue only supported independent checks. Report the zero-test result accurately
+and inspect the filter; do not claim either pattern or test behavior verified.
+
+**Failure:** Fills the source gap from a general DDD recipe, invents a Java upgrade
+or reports the command's successful exit as a passing test suite.

@@ -1,15 +1,14 @@
 schemaVersion: 1
 
 name: java-ddd-domain-services
-version: 1.0.0
+version: 1.2.0
 description: >-
-  Place Java DDD behavior in an aggregate, value object, domain service, policy,
-  specification or factory using business ownership and consistency requirements.
-  Use when a service takes over entity behavior, a rule combines several domain
-  concepts, a policy needs external facts, or creation and rehydration are confused.
-  Covers business names and packages, pure decision contracts and rule validation;
-  excludes application orchestration, database query construction and persistence
-  implementations.
+  Implement Java DDD behavior placement, named factories and validation following
+  the ddd-example domain reference. Use when deciding where a domain rule belongs,
+  implementing Validator and ValidationHandler, collecting Notification errors,
+  or preserving validation timing during creation, restoration and update.
+  Covers aggregate and value-object behavior without inventing domain services,
+  policies or specifications; excludes application orchestration and infrastructure.
 
 license: Apache-2.0
 
@@ -27,8 +26,8 @@ keywords:
   - java
   - ddd
   - domain-services
-  - domain-policy
-  - specification
+  - validation
+  - notification
   - factory
   - clean-architecture
 
@@ -36,19 +35,17 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 
 dependencies: []
 
 suggests:
-  - domain-logic-organization
-  - gof-strategy
+  - java-ddd
   - java-ddd-aggregates
   - java-ddd-domain-events
   - java-ddd-repositories
   - java-ddd-testing
-  - java-ddd-use-cases
   - java-ddd-value-objects
-  - query-objects-and-specifications
 
 capabilities:
   - reads-source
@@ -57,5 +54,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Domain Services
-      short_description: Business ownership, policies and creation contracts
-      default_prompt: Use Java DDD Domain Services to place this behavior and verify its business contract.
+      short_description: Reference domain behavior, factories and validation
+      default_prompt: Use Java DDD Domain Services to implement this domain behavior with the ddd-example validation and factory contracts.

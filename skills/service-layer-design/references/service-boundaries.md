@@ -1,250 +1,117 @@
-# Service Boundaries and Responsibilities
+# Application boundaries and source evidence
 
-Java examples are partial domain-model/Spring sketches: imports, application types and
-configuration are omitted. The `var` loop needs Java 10+; use the target's supported syntax
-and resolved Spring/security APIs. Source checks below use Spring Framework 6.2.12 and do
-not establish that any project's proxies, security, transactions or delivery are configured.
+Read this when assigning responsibilities, checking dependencies, or deciding whether
+a proposed addition belongs to the demonstrated application layer.
 
-## An application service that is doing its job
+## Authority and coverage
 
-```java
-@Service
-public class PlaceOrder {
+The sole technical and organizational reference is `ddd-example/application` at commit
+`8d964ce4106c2299164e28980ae7553e2afbdc92`. The authoring checkout was
+`C:/git/ddd-example`. Paths below are relative to that repository; `application/`
+contains the authoritative implementations and tests. The build files listed below are
+supporting evidence for that module's declared dependencies.
 
-    private final Orders orders;                 // repository, domain-owned interface
-    private final Customers customers;
-    private final ApplicationEventPublisher events;
-    private final Clock clock;
+At this snapshot, the application contains 78 main Java files: three root base classes,
+23 abstract action contracts, 23 defaults, 11 commands and 18 outputs. Tests contain
+23 action suites and `UseCaseTest`, with 103 `@Test` methods. Source inventory and
+reading do not establish that the tests pass on another environment.
 
-    PlaceOrder(Orders orders, Customers customers,
-               ApplicationEventPublisher events, Clock clock) {
-        this.orders = orders;
-        this.customers = customers;
-        this.events = events;
-        this.clock = clock;
-    }
+The project explicitly makes the observed patterns normative, including the differences
+between category, cast member, genre and video. The separate requirement for descriptive
+`@DisplayName` on every applied unit test is an intentional addition. Fixed historical
+dates in reconstruction-based temporal tests are also an explicitly approved adaptation.
+Neither requirement is claimed to be present in the original tests.
 
-    @PreAuthorize("hasAuthority('ORDER_PLACE')")
-    @Transactional
-    public OrderId place(PlaceOrderCommand command) {
-        // Partial sketch: require authorized actor/tenant access to this customer.
-        // Resolve authoritative prices or validate an authorized quote; do not trust client prices.
-        Customer customer = customers.byId(command.customerId())
-            .orElseThrow(() -> new UnknownCustomer(command.customerId()));
+## Responsibilities visible in the source
 
-        Order order = Order.draftFor(customer, clock);          // domain decides
-        for (var line : command.lines()) {
-            order.addLine(line.product(), line.quantity(), line.unitPrice());
-        }
-        order.confirm(customer.creditLimit());                  // invariant lives here
+| Owner                 | Demonstrated responsibilities                                                                                                                                                                                     | Concrete source anchors                                                                                                                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Application root      | Three independent abstract execution shapes; no framework lifecycle or dispatch                                                                                                                                   | `application/src/main/java/com/robsonkades/admin/catalogo/application/{UseCase,UnitUseCase,NullaryUseCase}.java`                                                                                       |
+| Abstract action       | Bind the base's input/output types; preserve cast-member sealing                                                                                                                                                  | `category/create/CreateCategoryUseCase.java`, `castmember/create/CreateCastMemberUseCase.java`, `video/media/update/UpdateMediaStatusUseCase.java`                                                     |
+| Default action        | Read command/query fields, convert IDs, obtain aggregates or projections, check referenced IDs, invoke domain operations, validate, persist/map results, and perform the action's demonstrated media coordination | `genre/create/DefaultCreateGenreUseCase.java`, `video/create/DefaultCreateVideoUseCase.java`                                                                                                           |
+| Command record        | Hold the actual action inputs and expose its source factories/accessors; no new generic command abstraction                                                                                                       | `category/create/CreateCategoryCommand.java`, `video/create/CreateVideoCommand.java`                                                                                                                   |
+| Output record         | Map the returned domain object/projection/resource into the action-specific result                                                                                                                                | `category/retrieve/get/CategoryOutput.java`, `video/retrieve/list/VideoListOutput.java`, `video/media/get/MediaOutput.java`                                                                            |
+| Imported domain types | Supply aggregate operations, identifiers, validation/error types, query/pagination types and gateway contracts consumed by the application                                                                        | Imports and calls throughout the defaults; `CategoryGateway`, `CastMemberGateway`, `GenreGateway`, `VideoGateway`, `MediaResourceGateway` are imported from `com.robsonkades.admin.catalogo.domain...` |
+| Action test           | Exercise a default with real domain objects and mocked gateway collaborators; assert the demonstrated outcomes and interactions                                                                                   | `application/src/test/java/com/robsonkades/admin/catalogo/application/category/delete/DeleteCategoryUseCaseTest.java`                                                                                  |
 
-        orders.save(order);
-        events.publishEvent(new OrderPlaced(order.id(), order.total(), Instant.now(clock)));
-        return order.id();
-    }
-}
-```
+Except for the full root/test paths, action anchors above are relative to
+`application/src/main/java/com/robsonkades/admin/catalogo/application/`.
 
-Read the method against the two-column table in the skill body. Its intended responsibilities
-are loading, delegating, saving and publishing under a configured transaction/security boundary.
-`Order.confirm` owns the local credit-limit decision if its implementation enforces that
-contract; this sketch alone does not establish equivalent enforcement on every write path.
+An application action contract is an **abstract class**, not an interface. A default
+extends that contract. The gateway dependency is the existing **domain-owned contract**,
+not a new application interface, a concrete repository, or another use case. The
+application source declares no gateway interfaces or implementations. Do not relocate
+or recreate imported domain types to make an application package look self-contained.
 
-The sketch requires configured transaction management and method security, proxy-mediated
-invocation and domain validation. A coarse ORDER_PLACE authority alone does not authorize
-arbitrary customer IDs. Validate quantities, bounded line counts and pricing provenance.
-`Order.confirm` enforces local rules, not a concurrent cross-order credit reservation;
-that needs an explicit version/locking/reservation protocol.
+Constructor dependencies across the defaults are only the five gateway types listed
+above. All are `private final` fields initialized with `Objects.requireNonNull`.
+Per-call input and state are local. This organization is source evidence; it does not
+prove that the gateway implementations are stateless, thread-safe or globally atomic.
 
-Two details matter here:
+## Preserve responsibilities without overgeneralizing
 
-- **`Clock` is injected**, so the use case is testable and `Instant.now()` never appears
-  inside domain logic.
-- **ApplicationEventPublisher alone does not promise after-commit or durable delivery.**
-  A transactional listener may deliberately run before commit for local transactional work;
-  external effects usually need after-commit ordering. An AFTER_COMMIT listener still has a
-  crash window and cannot roll back the committed order if it fails. For durable delivery,
-  write an outbox entry in the order transaction, then relay with retry/deduplication.
-  Check listener phase, fallback and executor configuration (`distribution-boundaries`).
+- **Delegation still includes application work.** Genre/video defaults query
+  `existsByIds`, compose notifications and report missing references. Do not move
+  these steps into a newly invented domain service, or reject every conditional as
+  misplaced business logic. Preserve the reference's exact division of work.
+- **Validation is not uniform.** Category create/update return
+  `Either<Notification, ...>`; cast-member, genre and video actions have their own
+  exception paths. Domain `Notification` is invocation-local. The chosen action
+  determines the contract; there is no universal application result wrapper.
+- **An output need not erase domain vocabulary.** Category retrieval retains
+  `CategoryID`; cast-member outputs retain `CastMemberType`; video retrieval retains
+  rating and media types. Preserve those signatures instead of introducing HTTP DTOs.
+- **A short action is still a use case.** Category/cast-member/genre deletion forwards
+  a converted ID directly to the gateway. Their list actions map gateway pagination.
+  The source retains separate abstract/default pairs and matching tests for these.
+- **Media coordination has action-specific limits.** Video creation attempts
+  `clearResources` after a caught failure; video update and upload do not share that
+  same cleanup contract. Video deletion calls deletion and then cleanup in sequence.
+  None of these facts proves atomicity, durable delivery or rollback of prior effects.
+  Preserve the precise flow using `java-ddd-use-cases`; do not add an outbox,
+  compensation framework or transaction annotation to fill an assumed gap.
+- **Fluent call sites are already explicit.** Records use the observed
+  `with`/`from` factories, and domain mutation calls may chain. A new builder,
+  command bus, generic CRUD superclass or umbrella service would change the reference
+  rather than reproduce it.
 
-## What the service must not become
+There is no application source for controllers, adapter implementations, DI wiring,
+authorization, transaction demarcation, event publication or injected clocks. This
+statement is scoped to the inspected application module; it makes no claim that those
+concerns are absent from the whole project. If a task requires one, request its reference
+or explicit rule and keep the application work within the known contract.
 
-```java
-// The rule has moved. Order is now a data holder and every other caller
-// that confirms an order must remember to repeat this.
-@Transactional
-public OrderId place(PlaceOrderCommand command) {
-    Order order = new Order();
-    order.setCustomerId(command.customerId());
-    order.setLines(map(command.lines()));
+## Build evidence and limits
 
-    BigDecimal total = order.getLines().stream()
-        .map(l -> l.getUnitPrice().multiply(BigDecimal.valueOf(l.getQuantity())))
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+| Evidence                                           | Observed setting                                                                      | Application consequence                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `application/build.gradle`                         | `java-conventions` and `java-library`; `implementation(project(":domain"))`           | Application compiles against the existing domain module; no direct infrastructure dependency is declared here |
+| `application/build.gradle`                         | `testImplementation(project(path: ':domain', configuration: 'testClasses'))`          | Action tests can reuse domain test fixtures                                                                   |
+| `buildSrc/src/main/groovy/java-conventions.gradle` | `io.vavr:vavr:0.10.4`                                                                 | Keep the reference's Vavr contract, including category `Either`/`Try`                                         |
+| Same convention                                    | JUnit Jupiter API/engine `5.9.2`; Mockito JUnit Jupiter `5.0.0`; `useJUnitPlatform()` | Preserve JUnit/Mockito application tests and the `unitTest` tag                                               |
+| `gradle/wrapper/gradle-wrapper.properties`         | Gradle `7.6`                                                                          | Do not silently upgrade the wrapper to validate a copied example                                              |
+| `buildSrc/build.gradle`                            | Source/target compatibility `JavaVersion.VERSION_17`                                  | This declaration is for buildSrc; it does not by itself pin the application's compiler release                |
 
-    if (total.compareTo(customer.getCreditLimit()) > 0) {   // ← the invariant, out here
-        throw new CreditLimitExceeded();
-    }
-    order.setStatus("CONFIRMED");
-    order.setTotal(total);
-    orders.save(order);
-    return order.getId();
-}
-```
+Java 17 is the authoring compatibility baseline for these patterns: the action source
+uses records and sealed/non-sealed classes. The inspected application/convention files
+do not declare an application toolchain or `--release`. Inspect the target compiler,
+runtime and resolved dependencies before applying code, and report any mismatch instead
+of silently modernizing or backporting the pattern. No preview API is required by the
+provided support classes.
 
-The mechanical tell: the service reads entity state, branches on it, and writes entity
-state back. In a domain-model design, check whether this bypasses invariant ownership;
-a deliberate Transaction Script can legitimately own that logic (`domain-logic-organization`).
+The four support assets preserve the corresponding source files, with normalized line
+endings and a final newline. Their three main classes need only Java; `UseCaseTest` needs the existing
+domain `Identifier` and the JUnit/Mockito dependencies above. Detailed action assets and
+test adaptations are maintained by `java-ddd-use-cases`.
 
-## Application service versus domain service
+## Evidence to report
 
-The table describes the domain-model separation used by these examples. A domain service
-may use domain-owned ports; a pure calculation needs fewer collaborators than an IO-backed policy.
+A useful review identifies an actual mismatch, such as `UnitUseCase` extending
+`UseCase<IN, Void>`, `GetCategoryByIdUseCase` moved to a flat `query` package,
+a newly introduced `CategoryService`, or a Spring repository injected into a default.
+Show the matching source contract and the smallest correction that preserves behavior.
 
-|             | Application service                          | Domain service                                                     |
-| ----------- | -------------------------------------------- | ------------------------------------------------------------------ |
-| Answers     | "run this use case"                          | "what is the correct business outcome, given these domain objects" |
-| Knows about | repositories, ports, transactions, the actor | domain types and domain-owned port contracts                       |
-| Transaction | demarcates the application unit              | states required consistency; does not own application demarcation  |
-| Framework   | may use it (`@Transactional`, security)      | independent under this chosen separation                           |
-| Testing     | fakes plus integration checks for boundaries | unit tests; doubles if domain ports participate                    |
-| Grouping    | cohesive use case or capability              | domain operation that fits neither entity nor value object         |
-
-A domain service is justified when a rule genuinely belongs to no single object:
-
-```java
-// Domain service: the policy is about two aggregates and belongs to neither.
-public final class TransferPolicy {
-
-    public Transfer prepare(Account source, Account target, Money amount) {
-        if (!source.currency().equals(target.currency())) {
-            throw new CurrencyMismatch(source.currency(), target.currency());
-        }
-        source.withdraw(amount);          // each aggregate still enforces its own rules
-        target.deposit(amount);
-        return new Transfer(source.id(), target.id(), amount);
-    }
-}
-```
-
-This policy shape is a domain-model choice, not the only definition of a domain service.
-Validate amount/currency and destination eligibility before mutation. If deposit fails after
-withdraw, the Java source object is already changed: database rollback does not undo its
-fields. Execute under the intended transaction/concurrency contract and discard failed unit-
-of-work objects; do not reuse or publish them. Same-account transfers need explicit semantics.
-
-This example performs no repository or transaction operations.
-The application service loads both accounts, calls this, and saves — and that separation is
-what makes the policy testable without a database.
-
-**Before writing one, check the alternatives**: an object may own the behaviour (with the
-other passed as an argument), or the work may be application orchestration. A domain policy
-can use a domain-owned lookup port when the decision needs it; specify unavailable/stale
-information, latency and concurrency semantics. A fake port can test policy branches without
-proving the real adapter or transaction contract.
-
-## Orchestrating more than one aggregate
-
-Two aggregates in one transaction is a decision, not a default:
-
-```java
-@Transactional
-public void settle(InvoiceId invoiceId, PaymentId paymentId) {
-    Invoice invoice = invoices.byId(invoiceId).orElseThrow();
-    Payment payment = payments.byId(paymentId).orElseThrow();
-
-    settlement.apply(invoice, payment);     // domain service decides
-    invoices.save(invoice);
-    payments.save(payment);
-}
-```
-
-This can be correct when both participate in the same actual transaction and immediate
-consistency is required. Lock timing depends on SQL, isolation and lock mode; optimistic
-conflict detection requires versioning or another protocol. Eventual coordination can reduce
-coupling but adds delivery, retry and reconciliation costs; it is not universally cheaper.
-
-Consistent lock acquisition order reduces cycles for the actual resources and lock modes
-covered. Java load order alone may not determine database lock order: generated SQL, indexes,
-constraints and lock upgrades matter. It does not prove freedom from all deadlocks, which
-can occur with only a few concurrent transactions. Preserve engine-appropriate rollback and
-bounded retry handling; inspect actual lock evidence before attributing a failure
-(`enterprise-transactions`).
-
-## Translation at the boundary
-
-The service layer is where infrastructure failures become domain-meaningful outcomes.
-
-```java
-try {
-    inventory.reserve(order.id(), order.lines());
-} catch (InventoryRejected e) {             // authoritative rejection: reserve had no effect
-    throw new OrderCannotBeFulfilled(order.id(), e);
-}
-```
-
-`InventoryRejected` is an illustrative port contract, not a framework exception: the adapter
-must have authoritative evidence that this operation was rejected without reserving. Do not
-classify a timeout, connection loss or generic unavailability this way. Those may follow a
-successful remote reservation; preserve UNKNOWN outcome and the original operation identity
-for reconciliation or contractually safe replay instead of declaring definite non-fulfillment.
-
-The adapter translates `RestClientException`/`SQLException` into a port-level failure; the
-service translates that into something the use case's caller can act on without discarding
-outcome certainty or cause. Keep infrastructure/protocol types out of the independent domain
-contract. At the application boundary, decide whether a framework type is accepted coupling
-or needs adaptation for the actual callers (`layering-and-boundaries`).
-
-Preserve rollback behavior when changing failure types. Under default Spring 6.2 rules,
-`RuntimeException` and `Error` trigger rollback, while checked exceptions do not. Wrapping
-an unchecked failure in a checked application exception can change the transaction outcome
-even when its cause is retained. Inspect method-specific and global rollback rules instead
-of assuming the defaults; verify persisted state after a failure following the first write
-(`enterprise-transactions`).
-
-Check failures deferred until flush/commit as well as failures thrown by the adapter call.
-When the standard imperative Spring proxy owns the transaction, commit occurs after the
-target method returns: a `try/catch` inside that method cannot translate a later commit
-exception. If the public API promises translated completion failures, put that mapping at
-a boundary that observes transaction completion, such as around the proxy invocation.
-Joining a caller-owned transaction defers completion to that caller; successful service
-return alone does not establish that its writes committed.
-
-## Read paths
-
-Read use cases can need authorization, snapshot consistency, orchestration or stable APIs.
-Keep a service when it owns those duties; direct query objects/projections can simplify
-reads when equivalent enforcement remains. A service does not inherently create a transaction.
-Materialize required data within its valid persistence context and bound streams/cursors;
-do not return lazy resources whose owning context has already closed.
-
-## Service lifetime and invocation state
-
-Spring's default singleton scope shares one instance per bean definition and container,
-not one instance per use case invocation. Keep the trusted actor, tenant, command and loaded
-aggregate in parameters or invocation-local state; a `currentTenant` field can let one call
-use another caller's identity. A transaction annotation does not isolate Java object fields.
-Verify two overlapping calls with different actors, including failure/cleanup paths.
-
-Stateless orchestration can still use intentionally shared caches or collaborators with explicit
-concurrency and ownership contracts. Do not serialize the whole service merely to retain
-avoidable conversational fields. If per-operation mutable state is necessary, give it an
-explicit lifetime. A prototype directly injected into a singleton is resolved once; it is not
-fresh per method invocation. A factory/provider can create one state object per operation,
-kept locally for that operation. Scoped proxies can resolve an active request scope, but jobs
-and message consumers need their own valid lifecycle; request scope is not a universal fix.
-Preserve any legitimate stateful workflow and its persistence/concurrency protocol when extracting
-services rather than converting it to untracked in-memory conversation state.
-
-## Primary references
-
-- [Fowler: Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html) — application boundary and coordinated operations.
-- [Evans: Domain-Driven Design Reference (2015), Services and Modules, pp. 14–15](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) — domain operations and cohesive concepts, not a service-count rule.
-- [Cockburn: Ports and Adapters (2005)](https://alistair.cockburn.us/hexagonal-architecture) — technology-independent port contracts; deciding which domain/application owner consumes a port still requires the chosen model.
-- [Java SE 10 language specification, enhanced for](https://docs.oracle.com/javase/specs/jls/se10/html/jls-14.html#jls-14.14.2) — `var` in the illustrative loop; framework compatibility is a separate constraint.
-- [Spring Framework 6.2.12 transaction-bound listener contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java) — phases, fallback and transaction-context requirements.
-- [Spring Framework 6.2.12 event publisher contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java) — publication is a handoff, not a durability promise.
-- [Spring Framework 6.2.12 transactional annotations](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc) — proxy interception, rollback defaults and configured overrides; verify the actual target version.
-- [Spring Framework 6.2.12 transaction interceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java) — standard imperative invocation commits after the target returns; distinguish target exceptions from completion failures.
-- [Spring Framework 6.2.12 bean scopes](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/core/beans/factory-scopes.adoc) — default singleton lifetime, prototype injection and scoped/provider access to shorter-lived dependencies.
-- [MySQL 8.4: minimizing and handling deadlocks](https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html) — an engine-specific example of hidden index locks and recovery despite ordering precautions, not a substitute for the target engine's contract.
+When the proposed pattern has no reference example, the result is a precise missing
+contract, not a guessed implementation. A successful compilation establishes signature
+compatibility; mocked gateway tests establish only the exercised action behavior.
+Neither demonstrates real storage, security or transaction guarantees.

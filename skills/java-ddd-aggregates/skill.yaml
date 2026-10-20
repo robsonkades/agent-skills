@@ -1,14 +1,13 @@
 schemaVersion: 1
 
 name: java-ddd-aggregates
-version: 1.0.1
+version: 1.1.1
 description: >-
-  Design and implement Java DDD aggregates when deciding which entities must change
-  atomically, moving invariants out of setters, separating creation from rehydration,
-  or preventing concurrent writes from bypassing the root. Covers domain identity,
-  child ownership, valid transitions and aggregate version checks. Use for aggregate
-  boundaries and lifecycle behavior; bounded-context discovery and ORM mapping have
-  separate owners.
+  Implement and review Java domain aggregates using the ddd-example domain contract.
+  Use when organizing aggregate packages, implementing typed roots, new/with factories,
+  validation timing, lifecycle methods, cross-aggregate IDs or collection ownership.
+  Covers Category, Genre, CastMember and Video patterns with domain unit checks;
+  application orchestration, persistence adapters and concurrency protocols are outside scope.
 
 license: Apache-2.0
 
@@ -28,18 +27,21 @@ keywords:
   - aggregates
   - entities
   - invariants
-  - optimistic-locking
+  - validation
   - rehydration
 
 files:
   - SKILL.md
   - skill.yaml
   - references/
+  - assets/
 
 dependencies: []
 
 suggests:
-  - bounded-context-design
+  - java-ddd
+  - java-ddd-domain-events
+  - java-ddd-domain-services
   - java-ddd-repositories
   - java-ddd-testing
   - java-ddd-value-objects
@@ -51,5 +53,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java DDD Aggregates
-      short_description: Aggregate invariants, identity and safe transitions
-      default_prompt: Use Java DDD Aggregates to design or review this aggregate's boundary, lifecycle and concurrent writes.
+      short_description: Aggregate factories, lifecycle and domain ownership
+      default_prompt: Use Java DDD Aggregates to implement or review this domain aggregate following the ddd-example reference contracts.

@@ -1,159 +1,155 @@
-# Semantic contracts for Java values
+# Reference contracts for values and identifiers
 
-Read the relevant section when its policy can change the implementation. Examples below
-are modeling choices to verify with the owning context; they are not universal DDD rules.
+Use this when implementing the ID hierarchy, a media value, resource handling or enum
+lookup. The sole source is `C:\git\ddd-example\domain`, inspected at repository commit
+`8d964ce4106c2299164e28980ae7553e2afbdc92`. The [source routes](../SKILL.md#conditional-references)
+provide complete bundled implementations from that revision. Inspect the current supplied
+checkout when available; a changed checkout can change the evidence. Otherwise identify
+the bundled revision when applying these contracts. Paths below are relative to the
+domain module; `main` abbreviates `src/main/java/com/robsonkades/admin/catalogo/domain`
+and `test` abbreviates `src/test/java/com/robsonkades/admin/catalogo/domain`.
 
-## Meaning before representation
+These are implementation contracts selected by the user as the standard. Describing a
+limitation does not authorize a repair, and it does not establish a general DDD rule.
+If an explicit requested behavior contradicts the source, surface the exact difference
+and ask only for the missing decision. Continue work that does not depend on it.
 
-An `OrderID` is a value expressing an identifier; it does not turn the referenced order
-into a value object. Keep `OrderID` and `CustomerID` different types even if both wrap a UUID
-when accidental interchange is a real failure mode. Do not expose arithmetic on identifiers.
-Avoid creating a wrapper for every primitive without a vocabulary, constraint, operation,
-or type-safety benefit.
+## Base types and typed IDs
 
-A persisted row does not automatically confer domain identity. A shipping address copied
-into an order may be an immutable snapshot even when its storage has a technical key. In a
-property-management context, the same-looking address may identify a managed location with
-a lifecycle. DTO fields likewise do not determine value semantics. These distinctions
-follow [Fowler's context-sensitive discussion of value objects](https://martinfowler.com/bliki/ValueObject.html).
+`main/ValueObject.java` is an empty abstract class. It supplies no validation, equality,
+hashing or immutability mechanism. `main/Identifier.java` extends it and declares only
+`public abstract String getValue()`. `Entity`/`AggregateRoot` consume typed identifiers;
+their lifecycle is covered by java-ddd-aggregates.
 
-## Input forms and canonicalization
+The concrete ID files are `main/category/CategoryID.java`,
+`main/castmember/CastMemberID.java`, `main/genre/GenreID.java` and
+`main/video/VideoID.java`. Preserve the following shape:
 
-Specify an accepted language before a canonical representation. For example, a synthetic
-document contract may accept exactly `DOC-` followed by eight ASCII digits. That does not
-authorize `replaceAll("\\D", "")`, trimming, case folding or conversion to a number.
-Deleting unexpected characters can make `12oops34` collide with a valid identifier; number
-conversion can discard meaningful leading zeroes. Syntax, checksum, current registration,
-and ownership are separate claims requiring different evidence.
+- An ordinary public class extending `Identifier`, not a record or a class declared final.
+- One private final `String value`; a private constructor enforcing nonnull input.
+- `from(String)` for reconstruction and `unique()` for new IDs; `getValue()` for access.
+- `equals` accepts `this`, rejects null/different runtime class, then compares values.
+  `hashCode` uses `Objects.hash(getValue())`. Equal text in different ID types remains
+  distinct. Do not centralize equality in the empty base class.
 
-If both formatted and unformatted documents are supported, validate each complete format
-first, then map their approved separators to the same value. Preserve the original input
-in the boundary record when needed for audit, separate from semantic equality. A business
-name may permit whitespace normalization while a case-sensitive external token may not.
-Unicode normalization and case folding require a named policy; an arbitrary regex or
-default locale does not establish equivalence. Bound input sizes before expensive parsing.
+| Type                                    | `from` behavior                            | Consequence                                                                                   |
+| --------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `CategoryID`, `CastMemberID`, `GenreID` | Preserve the supplied nonnull String.      | `"ABC"` and `"abc"` differ; leading zeroes, whitespace and empty strings survive.             |
+| `VideoID`                               | Call `anId.toLowerCase()`, then construct. | Case is transformed using the JVM default locale; null fails before reaching the constructor. |
 
-Parsing and validation factories remain deterministic. A document parser must not call a
-registry, clock or repository. A separate identifier generator such as `CategoryID.unique()`
-may create a new identity; do not disguise generation as parsing an existing value.
-When policy genuinely depends on a country, document type or version, model
-that discriminator explicitly and decide whether it belongs in equality. An empty string
-is not a universal absence value; keep optionality outside a required-value type unless
-the domain names a meaningful empty value.
+`main/utils/IdUtils.java` is a final utility with a private constructor. `uuid()` calls
+`UUID.randomUUID().toString().toLowerCase().replace("-", "")`. This yields the source's
+generated representation; it does not make UUID grammar an invariant of `from`.
+`test/genre/GenreTest.java` uses `CategoryID.from("123")` and `from("456")`, which would
+be broken by a UUID parser. Never replace the string with `UUID`, parse an ID numerically,
+strip characters or apply the VideoID transformation to all ID types.
 
-## Equality, hashing and ordering
+The lack of an explicit locale in `VideoID` is observable source behavior. Do not
+silently replace it with `Locale.ROOT`. When a new type's case rule is not specified,
+identify the difference between the reference IDs and request that rule rather than
+declaring one of them universally correct.
 
-List the semantic components before generating methods. Mutable technical metadata, a
-database row key and a serializer cache usually do not belong in value equality. Include
-units, currency and policy discriminators when differences change substitutability. Do not
-add inheritance for convenience when subclasses would change equality. Prefer a `final`
-class unless a deliberate type hierarchy has a documented equivalence contract.
+The complete ID assets in the [source routes](../SKILL.md#conditional-references) retain
+these per-type implementations. [CategoryID](../assets/java/CategoryID.java) remains at
+its existing asset path. Adapt names/packages only after identifying the owning aggregate;
+do not generate a parallel ID framework.
 
-Check reflexivity, symmetry, transitivity, consistency, null and unrelated types. Equal
-values must produce the same hash; unequal values may collide. A hash is not a durable
-business identifier. These are [Java Object contracts](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)>).
+## Media construction and equality
 
-Do not implement fuzzy numeric equality using an epsilon: proximity can be nontransitive.
-Use an explicit `isWithin(tolerance, other)` operation, or a named quantization policy that
-creates an equivalence relation. An ordering that ignores a component included in equality
-can make a sorted collection discard a distinct value. Cross-currency amounts have no
-natural economic order without an exchange-rate context; do not hide that conversion in
-`compareTo`.
+`main/video/ImageMedia.java` extends `ValueObject` and stores final strings `id`,
+`checksum`, `name` and `location`. Its private constructor requires each to be nonnull;
+there are no blank, path or checksum-format checks. Its factories are:
 
-## Exact amounts and currencies
+- `with(checksum, name, location)`: create an ID with `IdUtils.uuid()`.
+- `with(id, checksum, name, location)`: retain the supplied ID.
 
-Decide separately: accepted input precision, stored calculation precision, settlement
-scale, rounding mode and rounding stage. A price, tax calculation and payable amount may
-need different contracts. Define how residual minor units are allocated when division
-must conserve a total. Exchange conversion is an explicit operation with rate provenance;
-an `add` between unlike currencies should fail unless conversion is its declared purpose.
+Accessors are `id()`, `checksum()`, `name()` and `location()`. Equality requires the same
+runtime class and only checksum plus location; hashing uses those same two fields.
+`test/video/ImageMediaTest.java` explicitly compares two images with different names and
+generated IDs as equal. Full-field equality or ID-only equality would change this model.
 
-`BigDecimal.equals` includes scale; `compareTo` does not. Choose scale-sensitive equality,
-or canonicalize before both equality and hashing. A fixed-scale amount can use
-`setScale(scale, UNNECESSARY)` to accept exact equivalents and reject precision loss.
-Construct decimals from their decimal input rather than routing through `double`. An
-exact divide may fail for nonterminating results; rounding is a policy, not a catch-all
-exception fix. See the [Java BigDecimal contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html).
+`main/video/AudioVideoMedia.java` extends `ValueObject` with final strings `id`,
+`checksum`, `name`, `rawLocation`, `encodedLocation` and final `MediaStatus status`.
+All constructor arguments are required to be nonnull, but empty strings are accepted.
 
-Do not equate ISO default fraction digits with a ledger or cash-rounding rule.
-`Currency.getDefaultFractionDigits()` also returns `-1` for some pseudocurrencies;
-see [Currency's API](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Currency.html#getDefaultFractionDigits()>).
-Integral minor units still need a currency, unit scale, and checked overflow arithmetic.
-Keep calculation values distinct from display formatting. A chosen wire representation
-must preserve the amount without asking clients to guess its unit or scale.
+| Operation                                                             | Source behavior                                                                                                                                   |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `with(checksum, name, rawLocation)`                                   | Generate ID, set encoded location to `""`, status to `PENDING`.                                                                                   |
+| Full `with(id, checksum, name, rawLocation, encodedLocation, status)` | Reconstruct the supplied fields without a state-transition check.                                                                                 |
+| `processing()`                                                        | New instance with the same ID, checksum, name and locations, status `PROCESSING`.                                                                 |
+| `completed(encodedPath)`                                              | New instance with the same ID, checksum, name and raw location, supplied encoded path, status `COMPLETED`. Null path is rejected by construction. |
+| `isPendingEncode()`                                                   | True exactly for `MediaStatus.PENDING`.                                                                                                           |
 
-## Composite values and records
+`MediaStatus` declares `PENDING`, `PROCESSING`, `COMPLETED`, `ERROR`. The media methods
+do not reject `completed` from pending or `processing` from completed. Do not invent a
+transition state machine because the enum suggests one. `Video` decides when to replace
+its media; that aggregate behavior belongs to java-ddd-aggregates.
 
-A record provides component-based generated methods, not a proof of domain semantics.
-Its canonical constructor is a creation path, and reference-valued components can point
-at mutable state. Arrays need explicit content equality and defensive copying rather than
-the generated reference comparison. Custom record implementations must preserve their
-component-copy invariant. Consult the [Java Record contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
+Audio/video equality requires the same runtime class and only checksum plus raw location;
+hashing uses the same pair. ID, name, encoded location and status are excluded. Thus a
+pending value and its completed replacement compare equal despite different observable
+state. Test status and paths to verify processing, and verify that the original keeps
+its previous state. `test/video/AudioVideoMediaTest.java` supplies construction, equality
+and null-argument examples; it does not prove every transition or aliasing contract.
 
-For a list of already immutable values, `List.copyOf` isolates subsequent structural
-changes to the source and prohibits writes through the returned list. It does not copy
-mutable elements and rejects null elements. An unmodifiable view over a caller-owned list
-is insufficient. These are [List's collection contracts](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>).
+Neither media class is declared final in the source. Preserve exact-class equality and
+the concrete API; do not introduce inheritance or turn these classes into full-field
+records as an incidental cleanup.
 
-For arrays, copy on ingress and egress; copy nested mutable elements too or replace them
-with immutable values. Do not claim deep immutability from `final` fields. Decide whether a
-collection represents a sequence, set or multiset: order and duplicates are semantic
-choices, not a performance detail. Enforce size and member invariants before publication.
-Test mutation through both the original input and the returned accessor.
+## Resource and wrapper records
 
-## Ranges, units and time
+`main/video/Resource.java` extends `ValueObject`, has a private constructor and
+`with(byte[], checksum, contentType, name)`. All four arguments are nonnull. Each field
+is final, but `content` is stored and returned directly. Both changing the caller's array
+and changing the accessor result change the bytes seen through the object. There are no
+`equals` or `hashCode` overrides, so distinct instances retain identity equality, even
+when all fields and content match. The superclass adds no behavior.
 
-A range needs endpoint types, inclusivity, empty-range policy, and a rule for inversion.
-For `[start, end)`, touching ranges do not overlap; decide explicitly whether they can
-merge. A date range is not an instant range. Define the zone needed to turn a local business
-date/time into an instant and the policy for ambiguous or nonexistent local times.
-`Instant`, `LocalDate`, `Duration` and `Period` represent different concepts; the
-[java.time API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/package-summary.html)
-distinguishes timeline instants, local dates, elapsed amounts and calendar amounts.
+`main/video/VideoResource.java` is a record of `VideoMediaType type` and `Resource resource`
+with `with(type, resource)`. It has no validating canonical constructor; both direct
+construction and the factory accept null components. Record equality delegates the
+resource comparison to `Resource`, preserving its identity semantics and aliased bytes.
+Two wrappers of the same type and same resource compare equal; separately constructed
+resources with matching bytes do not make their wrappers equal.
 
-Do not add two temperatures as if they were distances merely because both contain a
-number and a unit. Model affine units, conversion precision and valid domains deliberately.
-For elapsed durations use the required precision and bounds. An expiry date can be a
-stable value while `isExpired(at)` depends on an explicitly supplied instant; do not bake
-the current clock into equality or a factory whose result later becomes invalid.
+Do not describe these objects as deeply immutable or apply `Arrays.equals`, byte copying,
+null guards, immutable collections or new validation just because another value type
+uses them. Those changes would need a separately stated requirement. When source fidelity
+and a requested deep-immutability guarantee conflict, report the conflict before editing.
 
-## Persistence and JSON boundaries
+Other source records (`pagination/SearchQuery`, `pagination/Pagination`,
+`video/VideoSearchQuery`, `video/VideoPreview`) do not extend `ValueObject`. Their presence
+does not authorize converting the base hierarchy or adding canonical-constructor checks.
+Pagination and search signatures belong to java-ddd-repositories. Mutable list/set
+components remain aliases unless their own implementation copies them.
 
-Keep the stable business value separate from the representation chosen by a database or
-consumer. A mapper may store components in several columns or a formatted string; the
-domain type need not mirror that shape or carry JPA/JSON annotations in this architecture.
-Inspect actual adapter and library versions before prescribing mapping APIs.
+## Enum lookups
 
-Round-trip tests must check meaning: same amount and currency, preserved leading zeroes,
-absence policy, collection order, date/zone information, and failure on invalid legacy data.
-Database precision, driver conversion and a client's number parser can lose information
-even when pure Java equality is correct. Rehydration should produce a valid object or an
-explicit compatibility failure. When old and new rule versions differ, design a migration
-or explicit legacy representation; silently sanitizing historical values hides corruption.
+`main/video/Rating.java` contains `ER`, `L`, `AGE_10`, `AGE_12`, `AGE_14`, `AGE_16`,
+`AGE_18`. `getName()` returns its label (`"10"`, for example); `of(label)` searches those
+labels with `equalsIgnoreCase` and returns `Optional<Rating>`. It does not parse the enum
+constant name `"AGE_10"`. Null, unknown and whitespace-padded labels return empty.
 
-Changing normalization or equality can collapse previously distinct rows or keys. Examine
-existing uniqueness constraints, cache keys, serialized messages and consumers before
-changing them. Share values between contexts only when their meaning and evolution are
-jointly owned. Matching JSON schemas alone are insufficient evidence of a shared kernel.
+`main/video/VideoMediaType.java` contains `VIDEO`, `TRAILER`, `BANNER`, `THUMBNAIL`,
+`THUMBNAIL_HALF`; `of(value)` matches the enum constant name case-insensitively and returns
+an Optional, without trimming or throwing for no match. `CastMemberType` is simply
+`ACTOR`, `DIRECTOR`; the source gives it no `of` factory. Do not invent a universal enum
+parser across these types.
 
-## Adapting the reference project's conventions
+## Useful tests and missing evidence
 
-The supplied catalog example puts `CategoryID` in `domain.category`, with an `Identifier`
-base type extending `ValueObject`. It uses `from(String)`, `unique()` and `getValue()`.
-Keep these names when extending that project; the generic `of` fixture is not a rename
-instruction. The empty `ValueObject` base has no equality implementation, so inspect each
-concrete class rather than relying on inheritance.
+Use the given/when/then organization and `Assertions` from the source media tests.
+The reference's `UnitTest` base adds `@Tag("unitTest")`. The user additionally requires
+`@DisplayName` on every unit test and no mocks. These requirements apply to new examples
+even though the inspected source tests do not have DisplayName annotations.
 
-In `domain.video`, `ImageMedia.with(...)` has final string fields and equality based on
-checksum and location. Its test explicitly permits differing names and generated ids to
-compare equal. That is evidence of this model's chosen equivalence, not a general media
-rule: establish which components the target context considers substitutable before
-reusing it.
+Prefer direct real values and named cases: case handling for a particular ID, equal ID
+hash lookup, different aggregate ID types, image equality, media status replacement and
+Resource aliasing. Avoid an assertion for every getter when the getter is not the behavior
+under test. Never use `assertEquals` alone to verify an audio/video state transition.
+The [example guide](java-example.md) explains runnable checks and their limits.
 
-`Resource` stores and returns the caller's `byte[]` directly; its name and base class do
-not protect it from mutation. A record such as `VideoResource` that embeds this object
-inherits that exposure. If an immutable content value is required, copy bytes at both
-boundaries and define equality for the chosen content/metadata contract. If identity or
-streaming ownership is the actual requirement, model that explicitly instead of labeling
-the mutable resource a value object. These observations come from source inspection;
-they are not results of running the reference project's test suite.
+There is no money, measurement-unit, range or official-document implementation in this
+reference module. Those policies cannot be derived from a generic value-object slogan.
+If requested, ask for the missing technical/business reference; do not reuse a synthetic
+CustomerDocument or InvoiceAmount contract as this project's standard.

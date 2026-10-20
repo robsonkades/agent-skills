@@ -1,130 +1,137 @@
 ---
 name: java-ddd-testing
 description: >-
-  Write and review Java DDD tests for aggregate invariants, value-object equality,
-  use-case outcomes, gateway rehydration, concurrency conflicts and domain-event durability.
-  Use when extracting behavior into a domain model, testing rejected transitions,
-  replacing repository mocks with in-memory gateways, or checking whether persistence
-  tests protect the aggregate's consistency boundary. Follows domain, application and
-  infrastructure packages. Does not choose bounded contexts or replace general Java
-  test design, Spring test setup or database performance analysis.
+  Write and review Java DDD domain unit tests following the ddd-example domain
+  reference: real aggregates and values, validation handlers, typed IDs, exceptions,
+  utilities and local domain events. Use when adding a domain behavior test, checking
+  validation timing or reviewing assertions that may miss a domain defect. Requires
+  no mocks and @DisplayName on every unit test. Does not implement application,
+  persistence, Spring or message-delivery tests.
 ---
 
 # Java DDD Testing
 
-## Purpose and scope
+## Scope and authority
 
-Turn a business rule into observable evidence at the layer that enforces it. Test the
-aggregate as a behavioral unit, the use case through its input/output contract, and the
-gateway against the persistence mechanism it promises. A class named `AggregateRoot`
-or a green mocked `save()` does not establish those properties.
+Test observable behavior inside the domain layer. The sole technical reference for
+this skill is the current `C:/git/ddd-example/domain` source and tests. Read the
+relevant production type and its tests before deriving an expectation. The source
+map in [Behavioral checks](references/behavioral-checks.md) records the inspected
+revision and its important variations; recheck the working tree when applying it.
 
-Use this skill to implement tests or review their evidence. A findings-only request
-produces findings and proposed checks without modifying the application. Keep existing
-adequate tests; do not migrate an entire suite because one test uses Mockito.
+Use real domain objects. **No mocks, spies, Mockito extensions, static mocking or
+mocked gateways belong in these domain tests. Every unit test method must declare
+`@DisplayName` with a clear description of its behavior.** The reference uses no
+mocks in its domain tests, but does not yet use `@DisplayName`; the latter is an
+explicit user requirement added to the reference conventions. Mockito in shared
+build dependencies does not authorize using it here.
 
-## Discover the contract
+Use this skill to implement tests or review their evidence. For a findings-only
+request, report findings and proposed checks without editing application code.
+Do not change production behavior merely to satisfy an invented test expectation.
 
-Before editing, inspect the relevant model, use case, adapters, tests, build configuration
-and project instructions. Record only facts needed for the task:
+## Establish the test contract
 
-- Business rule, permitted states, failure semantics and observable side effects.
-- Aggregate root and child ownership; identifiers and equality conventions; create versus
-  rehydrate factories; validation through exceptions, notifications or result values.
-- Entry points, caller identity, authorization policy, transaction owner and gateway contract.
-- JDK/toolchain, test runner and filters, resolved assertion libraries, engine/version,
-  migrations and transaction isolation when persistence is involved.
+1. Inspect the selected domain type, factory overload, validator, error type and
+   existing tests. Identify the rule, inputs and observable result. Do not invent
+   validation, normalization, uniqueness, idempotency or delivery requirements.
+2. Inspect `domain/build.gradle`, the shared convention, runner and filters. The
+   reference declares JUnit Jupiter API/engine 5.9.2 and a `unitTest` tag through
+   `UnitTest`. Its Gradle wrapper is 7.6; `buildSrc` selects Java 17 for itself,
+   which alone does not declare a domain compiler release. Confirm the target
+   toolchain; do not upgrade it or add dependencies to use these examples.
+3. Mirror the production package under `domain/src/test/java`, extend the
+   existing `UnitTest`, and follow `given..._when..._then/should...` names, `final`
+   locals, `expected...`/`actual...` values and JUnit `Assertions`. Add the required
+   method-level `@DisplayName`. Keep setup, action and assertions easy to locate.
+4. If the reference has alternatives, select the matching one from evidence.
+   If the target's intended contract is absent or conflicts with the reference,
+   ask a focused question; continue independent checks. Do not choose a familiar
+   DDD convention as an unstated replacement.
 
-First characterize current observable behavior when extracting DDD from existing code.
-If a legacy model mutates then validates, preserve evidence of that behavior and identify
-the intended safe boundary before changing it. Do not silently convert a compatibility
-test into a new business policy. Missing rules require a stated assumption or a focused
-question; independent checks can continue.
+## Match the enforcement boundary
 
-Use the existing root package. Under the family convention, tests mirror
-`domain.order.OrderTest`, `application.order.submit.DefaultSubmitOrderUseCaseTest` and
-`infrastructure.order.gateway.OrderGatewayImplTest`. Adapt an established project naming
-scheme such as `CreateCategoryUseCaseTest` and `CategoryMySQLGatewayTest` instead of
-renaming it. Name cases after business outcomes; preserve Portuguese `@DisplayName`
-when that is the project's convention. No example authorizes a JDK or library upgrade.
+| Subject                   | Test the actual behavior                                                                                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Category`, `Video`       | Create or update the real object, then call `validate(handler)`. Invalid input is not automatically rejected by the factory/update.                                                          |
+| `Genre`, `CastMember`     | Construction and `update` call `selfValidate`; assert `NotificationException` and its errors at that call. Updates mutate before validation, so an exception does not prove unchanged state. |
+| `ThrowsValidationHandler` | The first appended validation error throws `DomainException`; do not expect every independent error to accumulate.                                                                           |
+| `Notification`            | Validate through the real handler and assert the accumulated `Error.message()` values. Do not invent error codes or fields.                                                                  |
+| IDs and values            | Follow each concrete equality/null contract. `ValueObject` does not implement equality; media equality does not include all fields.                                                          |
+| Local events              | Assert recorded event count, type and payload, or invoke the real entity publication method with a small observing lambda as in `EntityTest`. This proves local behavior only.               |
 
-The family's source baseline is Java 17; these scenarios are test designs, not a compiled
-suite. Use the target project's supported JDK, test APIs and persistence version. A cited
-Jakarta Persistence contract does not authorize migrating a `javax.persistence` project.
+For exact source locations, boundary choices, collection/copy limitations, exceptions
+and utility cases, read [Behavioral checks](references/behavioral-checks.md).
+For complete source-compatible test examples with `@DisplayName`, read
+[JUnit examples](references/examples.md) when writing or adapting a domain test.
+When reproducing the reference test setup, use the complete
+[UnitTest.java](assets/domain/src/test/java/com/robsonkades/admin/catalogo/domain/UnitTest.java)
+and [Fixture.java](assets/domain/src/test/java/com/robsonkades/admin/catalogo/domain/Fixture.java)
+snapshots; their roles and dependencies are in the
+[test-support prerequisites](references/examples.md#test-support-source-and-prerequisites).
+Both are test-support classes without test methods. The optional `java-ddd` skill's
+[domain source index](../java-ddd/references/source-index.md) locates all 49 production
+source files shipped across the family; use it when assembling the examples without
+the original checkout. These assets preserve the recorded source revision, not a
+claim about a different target's current behavior.
 
-## Choose the evidence depth
+## Make each test useful
 
-| Claim                                                           | Smallest useful evidence                                     | What it cannot establish                             |
-| --------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| A value or aggregate protects a local rule                      | Pure Java domain tests, no Spring or database                | Durable uniqueness or races                          |
-| A use case returns the right result and protects a failure path | Real domain objects with controlled ports                    | Real SQL, framework proxying or transaction rollback |
-| A gateway preserves model meaning                               | Real adapter, migrations and isolated database               | Broker delivery or every concurrent schedule         |
-| A transaction protects root changes and an outbox               | Actual transaction entry point and independent durable reads | Relay recovery without testing the relay             |
+- One scenario should expose one meaningful behavior: a valid result, a specific
+  rejected input, a no-op, a copy boundary or an event trigger. Several assertions
+  may be necessary to establish that result; a test per getter adds no such rule.
+- Assert concrete changed and preserved fields, exact error counts/messages used
+  by the reference, or event payloads. Entity equality checks identity and cannot
+  establish that an update preserved the right state.
+- Pair acceptance and rejection at actual boundaries. Null, blank and trimmed
+  length are separate validator branches. Do not copy another aggregate's limits
+  or add a positive-duration rule that `VideoValidator` does not contain.
+- Capture immutable before-values, not an alias to the same mutable aggregate.
+  Do not require rollback after `Genre.update` or `CastMember.update`: their source
+  assigns state before throwing. Characterize it honestly and ask before changing
+  that behavior.
+- Prefer existing project fixtures or direct real-object construction for new tests.
+  Reuse the reference `Fixture` for unrelated valid setup when it already fits the
+  project, but pin every input that decides the expected result. Its Faker values
+  are not fixed, and its copy methods do not establish universal deep-copy behavior.
+- For update-time tests, reconstruct through the existing `with(...)` using fixed
+  dates in the past; assert advancement from that old `updatedAt` and preservation
+  of `createdAt`. This setup is an explicit user requirement. The source compares
+  immediate wall-clock values, which need not differ. A no-op can instead assert
+  an unchanged timestamp. Do not add sleeps, static mocks or a new `Clock`
+  production API to make a domain test pass.
+- Keep assertions on public behavior. No reflection, private-method verification,
+  generic test framework or extra production getters solely for a test.
 
-Read [Behavioral checks and trustworthy fakes](references/behavioral-checks.md) when
-implementing domain or application tests, or when a fake may hide a missing write.
-Read [Persistence and delivery evidence](references/persistence-and-delivery.md) for
-rehydration, rollback, version conflicts, natural-key uniqueness or outbox claims.
-Read [Evaluation cases](references/evaluation-cases.md) when reviewing this skill or
-testing whether its guidance catches a misleading green suite.
+## Execute and report
 
-## Decision rules
+Run the focused test command in the correct module with the supported toolchain,
+then the requested domain suite. For this reference, the shared convention supplies
+`:domain:unitTests` and `:domain:test`; inspect filters before using `--tests`.
+Read discovered/executed counts, failures and skips. Zero executed tests, a compile
+failure or a skipped test cannot establish the asserted behavior.
 
-1. **Observe the business outcome.** Assert relevant state, returned value, errors and
-   domain events. Do not prescribe the private method sequence or mock every domain object.
-   A recorded interaction is appropriate when the interaction itself is the contract,
-   such as requesting an external notification; it still does not prove delivery.
-2. **Pair acceptance with rejection.** For a transition, test its valid case and the
-   boundary that rejects it. Rejection must not alter committed state or publish success.
-   For invariant-preserving domain commands, also assert the in-memory aggregate, audit
-   data and pending events remain as before the failed command.
-   If rejection returns an error value inside a unit of work, verify the transaction
-   outcome too; do not assume that the framework interprets that value as rollback.
-3. **Protect the root's authority.** Exercise child updates through the root and check
-   aliases cannot bypass it. A read-only list of mutable children is insufficient.
-4. **Make persistence observable.** For an explicit-save port, a fake must store detached
-   snapshots and rehydrate fresh objects. A shared `Map<ID, Aggregate>` can persist changes
-   accidentally and let a missing `save()` pass. If the contract uses a unit of work,
-   model its commit/rollback boundary instead of inventing explicit saves.
-5. **Keep security independent of transport.** For each supported entry point, prove
-   applicable caller/tenant/ownership rules hold before a protected side effect. An HTTP
-   rejection alone does not cover a scheduled job or message consumer invoking the use case.
-6. **Use the mechanism for the claim.** H2 may check a compatible mapping; it cannot prove
-   another engine's SQL, locking or isolation. A fake version check tests application
-   handling, not the production adapter's atomic compare-and-update.
+Review every added or changed unit test for `@DisplayName`, real domain construction
+and an expectation that would detect the stated defect. Run the complete examples
+when materially changing them; their prerequisites are in the example reference.
+No coverage percentage or passing mocked interaction substitutes for the rule.
 
-## Execute and validate
+Report the behavior covered, files changed or findings, exact executed commands and
+results, and unresolved gaps. Distinguish source inspection, executed code tests
+and written evaluation scenarios. Use [Evaluation cases](references/evaluation-cases.md)
+when reviewing the skill's decisions; written cases are not measured agent results.
 
-1. Write the smallest scenario with explicit preconditions and an independent expectation.
-   Use fixed instants and deterministic identifiers through existing seams where relevant.
-   Avoid asserting wall-clock timestamps are strictly increasing across immediate calls.
-2. Implement or adjust the focused test, preserving its business meaning. Do not add domain
-   getters or public child mutators solely to expose internals; observe existing contracts
-   or a deliberate immutable projection.
-3. Run the narrow test command from the correct module, then required integration checks.
-   Inspect discovered/executed counts, failures and skips; a filtered command with zero tests
-   is no evidence. Use isolated resources and bound any concurrency or delivery wait.
-4. For a consequential new guard, confirm a representative defect is detected: a rejected
-   transition that mutates, an omitted save, or a stale write that overwrites. Use a scoped
-   hostile fixture or temporary mutation, restore it, and rerun. A compilation failure is
-   not proof that the intended assertion catches the defect.
+## Boundaries and handoffs
 
-The completion gate is evidence for the requested rule, its relevant rejection path and
-the actual enforcement boundary. Do not broaden into every scenario below for a small
-change; select cases by the promise at risk.
+Gateway interfaces live in the domain, but there is no implementation behavior to
+prove by mocking them. Repository adapters, database round trips, transactions,
+concurrency conflicts, application orchestration and broker/outbox durability need
+their own authorized scope and evidence; they are not domain unit tests. See
+[Persistence and delivery boundary](references/persistence-and-delivery.md) when
+a request mixes these claims with a local domain test.
 
-## Output and limits
-
-Report the rule covered, files changed or review findings, exact commands and observed
-results, and the remaining gap. Distinguish executed tests, manually inspected code and
-written scenarios. If a database or broker is unavailable, complete pure tests and report
-the specific integration case still unverified. Do not claim that a fake establishes
-rollback, that one schedule proves race freedom, or that test coverage proves the model
-matches the business without agreement on its rules.
-
-For changing the model, optionally compose with java-ddd-aggregates, java-ddd-value-objects,
-java-ddd-use-cases, java-ddd-domain-services, java-ddd-repositories or java-ddd-domain-events.
-The java-ddd skill owns wider DDD discovery. General test readability belongs to java-test-design; double
-selection to java-test-doubles; framework setup to spring-boot-testing; dependency and
-cross-layer contract checks to architecture-testing. These are optional neighbors: when
-unavailable, state the needed contract and continue this skill's focused checks.
+Compose with `java-ddd-aggregates`, `java-ddd-value-objects`,
+`java-ddd-domain-events`, `java-ddd-domain-services` or `java-ddd-repositories`
+for the corresponding model contract. `java-ddd` owns domain discovery. Hand off
+application work to `java-ddd-use-cases` and framework tests to
+`spring-boot-testing`; neither changes this skill's domain rules.
